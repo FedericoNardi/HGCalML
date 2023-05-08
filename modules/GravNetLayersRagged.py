@@ -3216,6 +3216,9 @@ class RaggedGravNet(LayerWithMetrics):
         
         
         coordinates = self.input_spatial_transform(x)
+        print("---> In GravNetLayersRagged\n")
+        print("--> Coordinates: ", coordinates)
+        print("--> Training: ", training)
         neighbour_indices, distancesq, sidx, sdist = self.compute_neighbours_and_distancesq(coordinates, row_splits, training)
         neighbour_indices = tf.reshape(neighbour_indices, [-1, self.n_neighbours]) #for proper output shape for keras
         distancesq = tf.reshape(distancesq, [-1, self.n_neighbours])
