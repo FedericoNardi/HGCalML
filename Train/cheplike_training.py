@@ -307,7 +307,8 @@ samplepath=train.val_data.getSamplePath(train.val_data.samples[0])
 
 
 # publishpath = "jkiesele@lxplus.cern.ch:~/Cernbox/www/files/temp/July2022_jk/"
-publishpath = "jkiesele@lxplus.cern.ch:~/Cernbox/www/files/temp/July2022_pz/"
+publishpath = "cms:/lustre/cmswork/fnardi/crilin_training/"
+
 publishpath += [d  for d in train.outputDir.split('/') if len(d)][-1] 
 
 cb = []
@@ -419,7 +420,7 @@ model, history = train.trainModel(nepochs=5,
                                   batchsize=nbatch,
                                   additional_callbacks=cb)
 
-'''
+
 # Note the submodel here its not just train.keras_model
 for l in train.keras_model.layers:
     if 'FullOCLoss' in l.name:
@@ -435,5 +436,3 @@ model, history = train.trainModel(nepochs=121,
                                   additional_callbacks=cb)
     
 
-
-'''
