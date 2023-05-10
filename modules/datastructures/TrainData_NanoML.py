@@ -794,7 +794,6 @@ class TrainData_NanoML(TrainData):
          - row_splits
          
         '''
-        print('\n---> ILIST: ',ilist,'\n\n')
         
         out = {
             'features':ilist[0],

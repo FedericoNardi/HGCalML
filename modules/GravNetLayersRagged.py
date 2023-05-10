@@ -3214,11 +3214,7 @@ class RaggedGravNet(LayerWithMetrics):
         if row_splits.shape[0] is not None:
             tf.assert_equal(row_splits[-1], x.shape[0])
         
-        
         coordinates = self.input_spatial_transform(x)
-        print("---> In GravNetLayersRagged\n")
-        print("--> Coordinates: ", coordinates)
-        print("--> Training: ", training)
         neighbour_indices, distancesq, sidx, sdist = self.compute_neighbours_and_distancesq(coordinates, row_splits, training)
         neighbour_indices = tf.reshape(neighbour_indices, [-1, self.n_neighbours]) #for proper output shape for keras
         distancesq = tf.reshape(distancesq, [-1, self.n_neighbours])

@@ -65,9 +65,6 @@ def BinnedSelectKnn(K : int, coords, row_splits, direction = None, n_bins=None, 
     bin_coords = coords
     if bin_coords.shape[-1]>max_bin_dims:
         bin_coords = bin_coords[:,:max_bin_dims]
-
-    print("---> Bin by Coords input: ",name, ". Content: \n",bin_coords)
-    print("---> Coords input: ",name, ". Content: \n",coords)
     
     dbinning,binning, nb, bin_width, nper = BinByCoordinates(bin_coords, row_splits, n_bins=n_bins, name=name)
     
