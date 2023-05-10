@@ -20,7 +20,7 @@ from tensorflow.keras.layers import Reshape,BatchNormalization, Dropout, Add
 from GravNetLayersRagged import MultiAttentionGravNetAdd,WeightFeatures,WeightedNeighbourMeans,DownSample, CreateIndexFromMajority, ProcessFeatures, SoftPixelCNN, RaggedGravNet, DistanceWeightedMessagePassing
 
 from tensorflow.keras.layers import Multiply, Dense, Concatenate, GaussianDropout
-from datastructures import TrainData_NanoML, TrainData_crilin
+from datastructures import TrainData_NanoML
 
 from callbacks import plotEventDuringTraining, plotGravNetCoordsDuringTraining, plotClusteringDuringTraining, plotClusterSummary
 from DeepJetCore.DJCLayers import StopGradient,ScalarMultiply, SelectFeatures, ReduceSumEntirely
@@ -65,27 +65,18 @@ make this about coordinate shifts
 
 '''
 
-batchnorm_options={
-    # 'viscosity': .1,
-    # 'fluidity_decay': 1e-4,
-    # 'max_viscosity': 1.,
-    # 'soft_mean': False,
-    # 'variance_only': False,
-    'record_metrics': True,
-    }
 
 #loss options:
 loss_options={
-    'energy_loss_weight': .7,
+    'energy_loss_weight': .25,
     'q_min': 1.5,
-    's_b': 1.2, # Added bkg suppression factor
-    'use_average_cc_pos': 0.05,
-    'classification_loss_weight':0.1,
+    'use_average_cc_pos': 0.1,
+    'classification_loss_weight':0.0,
     'too_much_beta_scale': 1e-5 ,
     'position_loss_weight':1e-5,
-    'timing_loss_weight':0.,
-    'beta_loss_scale':.5,
-    'beta_push': 0.01 #0.01 #push betas gently up at low values to not lose the gradients
+    'timing_loss_weight':0.1,
+    'beta_loss_scale':2.,
+    'beta_push': 0#0.01 #push betas gently up at low values to not lose the gradients
     }
 
 
@@ -95,7 +86,7 @@ dense_activation='elu'
 record_frequency=20
 plotfrequency=50 #plots every 1k batches
 
-learningrate = 1e-7
+learningrate = 1e-6
 nbatch = 100000
 if globals.acc_ops_use_tf_gradients: #for tf gradients the memory is limited
     nbatch = 60000
@@ -110,13 +101,13 @@ n_cluster_space_coordinates = 3
 def gravnet_model(Inputs,
                   td,
                   debug_outdir=None,
-                  plot_debug_every=200,
+                  plot_debug_every=2000,
                   ):
     ####################################################################################
     ##################### Input processing, no need to change much here ################
     ####################################################################################
 
-    is_preselected = True # isinstance(td, TrainData_PreselectionNanoML)
+    is_preselected = isinstance(td, TrainData_PreselectionNanoML)
 
     pre_selection = td.interpretAllModelInputs(Inputs,returndict=True)
                                                 
@@ -131,15 +122,15 @@ def gravnet_model(Inputs,
     print('available pre-selection outputs',[k for k in pre_selection.keys()])
                                           
     
-    t_spectator_weight = 0.*pre_selection['t_spectator']+1.
+    t_spectator_weight = pre_selection['t_spectator_weight']
     rs = pre_selection['row_splits']
                                
-    x_in = Concatenate()([pre_selection['t_pos'],
+    x_in = Concatenate()([pre_selection['coords'],
                           pre_selection['features']])
                            
     x = x_in
     energy = pre_selection['rechit_energy']
-    c_coords = pre_selection['t_pos']#pre-clustered coordinates
+    c_coords = pre_selection['coords']#pre-clustered coordinates
     t_idx = pre_selection['t_idx']
     
     ####################################################################################
@@ -162,7 +153,7 @@ def gravnet_model(Inputs,
         x = Dense(64,activation=dense_activation)(x)
         x = Dense(64,activation=dense_activation)(x)
         x = Dense(64,activation=dense_activation)(x)
-        x = ScaledGooeyBatchNorm2(**batchnorm_options)(x)
+        x = ScaledGooeyBatchNorm2()(x)
         ### reduction done
         
         n_dims = 6
@@ -195,13 +186,13 @@ def gravnet_model(Inputs,
                                            activation=dense_activation
                                            )([x,gnnidx,gndist])
             
-        x = ScaledGooeyBatchNorm2(**batchnorm_options)(x)
+        x = ScaledGooeyBatchNorm2()(x)
         
         x = Dense(64,name='dense_past_mp_'+str(i),activation=dense_activation)(x)
         x = Dense(64,activation=dense_activation)(x)
         x = Dense(64,activation=dense_activation)(x)
         
-        x = ScaledGooeyBatchNorm2(**batchnorm_options)(x)
+        x = ScaledGooeyBatchNorm2()(x)
         
         
         allfeat.append(x)
@@ -222,12 +213,12 @@ def gravnet_model(Inputs,
     #######################################################################
     
     #use a standard batch norm at the last stage
-    x = ScaledGooeyBatchNorm2(**batchnorm_options)(x)
+    x = ScaledGooeyBatchNorm2()(x)
     x = Concatenate()([c_coords]+[x])
     
     pred_beta, pred_ccoords, pred_dist,\
     pred_energy_corr, pred_energy_low_quantile, pred_energy_high_quantile,\
-    pred_pos, pred_time, pred_time_unc, pred_id = create_outputs(x, n_ccoords=n_cluster_space_coordinates, fix_distance_scale=True)
+    pred_pos, pred_time, pred_time_unc, pred_id = create_outputs(x, n_ccoords=n_cluster_space_coordinates)
     
     # loss
     pred_beta = LLFullObjectCondensation(scale=1.,
@@ -248,7 +239,7 @@ def gravnet_model(Inputs,
          pre_selection['t_pos'] ,
          pre_selection['t_time'] ,
          pre_selection['t_pid'] ,
-         pre_selection['t_spectator']*0.+1.,
+         pre_selection['t_spectator_weight'],
          pre_selection['t_fully_contained'],
          pre_selection['t_rec_energy'],
          pre_selection['t_is_unique'],
@@ -292,7 +283,7 @@ if not train.modelSet():
     
     train.keras_model.summary()
     
-    if not isinstance(train.train_data.dataclass(), TrainData_crilin):
+    if not isinstance(train.train_data.dataclass(), TrainData_PreselectionNanoML):
         from model_tools import apply_weights_from_path
         import os
         path_to_pretrained = os.getenv("HGCALML")+'/models/pre_selection_june22/KERAS_model.h5'
@@ -307,8 +298,7 @@ samplepath=train.val_data.getSamplePath(train.val_data.samples[0])
 
 
 # publishpath = "jkiesele@lxplus.cern.ch:~/Cernbox/www/files/temp/July2022_jk/"
-publishpath = "cms:/lustre/cmswork/fnardi/crilin_training/"
-
+publishpath = "jkiesele@lxplus.cern.ch:~/Cernbox/www/files/temp/July2022_pz/"
 publishpath += [d  for d in train.outputDir.split('/') if len(d)][-1] 
 
 cb = []
@@ -408,19 +398,19 @@ cb += [
     plotClusterSummary(
         outputfile=train.outputDir + "/clustering/",
         samplefile=train.val_data.getSamplePath(train.val_data.samples[0]),
-        after_n_batches=100
+        after_n_batches=1000
         )
     ]
 
-# cb=[]
+#cb=[]
 
 train.change_learning_rate(learningrate)
 
-model, history = train.trainModel(nepochs=5,
+model, history = train.trainModel(nepochs=3,
                                   batchsize=nbatch,
                                   additional_callbacks=cb)
 
-
+print("freeze BN")
 # Note the submodel here its not just train.keras_model
 for l in train.keras_model.layers:
     if 'FullOCLoss' in l.name:
@@ -435,4 +425,5 @@ model, history = train.trainModel(nepochs=121,
                                   batchsize=nbatch,
                                   additional_callbacks=cb)
     
+
 
