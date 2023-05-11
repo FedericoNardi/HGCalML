@@ -27,7 +27,7 @@ from DeepJetCore.DJCLayers import StopGradient,ScalarMultiply, SelectFeatures, R
 
 from clr_callback import CyclicLR
 
-from model_blocks import create_outputs
+from model_blocks import create_outputs, condition_input
 from GravNetLayersRagged import MultiBackScatter,EdgeCreator, EdgeSelector
 from GravNetLayersRagged import GroupScoreFromEdgeScores,NoiseFilter
 from GravNetLayersRagged import ProcessFeatures,SoftPixelCNN, RaggedGravNet
@@ -65,29 +65,19 @@ make this about coordinate shifts
 
 '''
 
-batchnorm_options={
-    'viscosity': .7,
-    # 'fluidity_decay': 1e-4,
-    # 'max_viscosity': 1.,
-    # 'soft_mean': False,
-    # 'variance_only': False,
-    'record_metrics': True,
-    }
-
 #loss options:
 loss_options={
     'energy_loss_weight': .5,
     'q_min': 1.5,
     's_b': 1.2, # Added bkg suppression factor
     'use_average_cc_pos': 0.1,
-    'classification_loss_weight':0.1,
+    'classification_loss_weight':0.,
     'too_much_beta_scale': 1e-5 ,
     'position_loss_weight':1e-5,
     'timing_loss_weight':0.,
     'beta_loss_scale':.25,
     'beta_push': 0.05 #0.01 #push betas gently up at low values to not lose the gradients
     }
-
 
 #elu behaves much better when training
 dense_activation='relu'
@@ -111,25 +101,20 @@ def gravnet_model(Inputs,
                   td,
                   debug_outdir=None,
                   plot_debug_every=200,
+                  # pass_through=True
                   ):
     ####################################################################################
     ##################### Input processing, no need to change much here ################
     ####################################################################################
 
-    is_preselected = True # isinstance(td, TrainData_PreselectionNanoML)
+    is_preselected = True #isinstance(td, TrainData_PreselectionNanoML)
 
     pre_selection = td.interpretAllModelInputs(Inputs,returndict=True)
-                                                
-    #can be loaded - or use pre-selected dataset (to be made)
-    if not is_preselected:
-        pre_selection = pre_selection_model(pre_selection,trainable=False,pass_through=False)
-    else:
-        pre_selection['row_splits'] = CastRowSplits()(pre_selection['row_splits'])
-        print(">> preselected dataset will omit pre-selection step")
-    
-    #just for info what's available
-    print('available pre-selection outputs',[k for k in pre_selection.keys()])
-                                          
+
+    # Add extra layer of BatchNorm to the features
+    pre_selection['features'] = ScaledGooeyBatchNorm2()(pre_selection['features'])
+                                
+    pre_selection = condition_input(pre_selection, no_scaling=False ) 
     
     t_spectator_weight = 0.*pre_selection['t_spectator']
     rs = pre_selection['row_splits']
@@ -139,7 +124,7 @@ def gravnet_model(Inputs,
                            
     x = x_in
     energy = pre_selection['rechit_energy']
-    c_coords = pre_selection['t_pos']#pre-clustered coordinates
+    c_coords = pre_selection['coords'] # pre-clustered coordinates
     t_idx = pre_selection['t_idx']
     
     ####################################################################################
@@ -229,6 +214,20 @@ def gravnet_model(Inputs,
     pred_energy_corr, pred_energy_low_quantile, pred_energy_high_quantile,\
     pred_pos, pred_time, pred_time_unc, pred_id = create_outputs(x, n_ccoords=n_cluster_space_coordinates, fix_distance_scale=True)
     
+    print("======= outputs created =======")
+    print("---> pred_beta: ", pred_beta)
+    print("---> pred_ccoords: ", pred_ccoords)
+    print("---> pred_dist: ", pred_dist)
+    print("---> pred_energy_corr: ", pred_energy_corr)
+    print("---> pred_energy_low_quantile: ", pred_energy_low_quantile)
+    print("---> pred_energy_high_quantile: ", pred_energy_high_quantile)
+    print("---> pred_pos: ", pred_pos)
+    print("---> pred_time: ", pred_time)
+    print("---> pred_time_unc: ", pred_time_unc)
+    print("---> pred_id: ", pred_id)
+    print("=====================")
+
+
     # loss
     pred_beta = LLFullObjectCondensation(scale=1.,
                                          use_energy_weights=True,
@@ -248,7 +247,7 @@ def gravnet_model(Inputs,
          pre_selection['t_pos'] ,
          pre_selection['t_time'] ,
          pre_selection['t_pid'] ,
-         pre_selection['t_spectator']*0.
+         pre_selection['t_spectator'],
          pre_selection['t_fully_contained'],
          pre_selection['t_rec_energy'],
          pre_selection['t_is_unique'],
@@ -307,7 +306,7 @@ samplepath=train.val_data.getSamplePath(train.val_data.samples[0])
 
 
 # publishpath = "jkiesele@lxplus.cern.ch:~/Cernbox/www/files/temp/July2022_jk/"
-publishpath = "cms:/lustre/cmswork/fnardi/crilin_training/"
+publishpath = "fnardi@cms:/lustre/cmswork/fnardi/crilin_training/"
 
 publishpath += [d  for d in train.outputDir.split('/') if len(d)][-1] 
 
