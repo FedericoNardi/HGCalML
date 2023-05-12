@@ -87,7 +87,7 @@ dense_activation='relu'
 record_frequency=10
 plotfrequency=5 #plots every 1k batches
 
-learningrate = 1e-2
+learningrate = 1e-3
 nbatch = 50000
 if globals.acc_ops_use_tf_gradients: #for tf gradients the memory is limited
     nbatch = 60000
