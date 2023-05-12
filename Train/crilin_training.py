@@ -317,7 +317,7 @@ samplepath=train.val_data.getSamplePath(train.val_data.samples[0])
 publishpath = "fnardi@cms:/lustre/cmswork/fnardi/crilin_training/"
 
 publishpath += [d  for d in train.outputDir.split('/') if len(d)][-1] 
-publishpath = None
+#publishpath = None
 cb = []
 
 
