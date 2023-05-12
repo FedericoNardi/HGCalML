@@ -55,8 +55,6 @@ class TrainData_crilin(TrainData_NanoML):
         evt_dE = self.branchToFlatArray(tree["evt_dE"])
         evt_trueE = self.branchToFlatArray(tree["photon_E"])
         isSignal = self.branchToFlatArray(tree["isSignal"], dtype='int32')
-
-        print( "---> ONLY NOISE HERE .-.",(tree["isSignal"].array()>=0).any() )
         
         zerosi = 0 * isSignal
         ### now we build the same structure as NanoML
