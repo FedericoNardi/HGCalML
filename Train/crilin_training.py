@@ -69,23 +69,23 @@ batchnorm_options={}
 
 #loss options:
 loss_options={
-    'energy_loss_weight': .5,
+    'energy_loss_weight': .0, #you don't have an energy truth
     'q_min': 1.5,
-    's_b': 1.2, # Added bkg suppression factor
+    #'s_b': 1.2, # Added bkg suppression factor
     'use_average_cc_pos': 0.1,
     'classification_loss_weight':0.,
     'too_much_beta_scale': 1e-5 ,
     'position_loss_weight':1e-5,
     'timing_loss_weight':0.,
-    'beta_loss_scale':.25,
-    'beta_push': 0.05 #0.01 #push betas gently up at low values to not lose the gradients
+    #'beta_loss_scale':.25,
+    'beta_push': 0.0 # keep at zero
     }
 
 #elu behaves much better when training
-dense_activation='relu'
+dense_activation='elu'
 
 record_frequency=10
-plotfrequency=5 #plots every 1k batches
+plotfrequency=10 #plots every 1k batches
 
 learningrate = 1e-3
 nbatch = 50000
@@ -182,6 +182,8 @@ def gravnet_model(Inputs,
                                                                     energy,
                                                                     t_idx,
                                                                     rs]) 
+        
+        gncoords = StopGradient()(gncoords)
         x = Concatenate()([gncoords,x])           
         
         x = DistanceWeightedMessagePassing([64,64,32,32,16,16],
@@ -423,10 +425,12 @@ cb += [
 
 train.change_learning_rate(learningrate)
 
-model, history = train.trainModel(nepochs=5,
+model, history = train.trainModel(nepochs=200,
                                   batchsize=nbatch,
                                   additional_callbacks=cb)
 
+
+exit()
 
 # Note the submodel here its not just train.keras_model
 for l in train.keras_model.layers:
