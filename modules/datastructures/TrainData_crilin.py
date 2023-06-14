@@ -41,6 +41,7 @@ class TrainData_crilin(TrainData_NanoML):
         evt_dE: the total energy deposited by the signal photon in the calorimeter
         evt_ID: an int label for each event -only for bookkeeping, should not be needed
         isSignal: a flag, -1 if only BIB noise, 0 if there is also signal hit deposition
+
         '''
         
         hit_x, rs = self.branchToFlatArray(tree["hit_x"], True)
@@ -88,52 +89,3 @@ class TrainData_crilin(TrainData_NanoML):
                 t['t_idx'], t['t_energy'], t['t_pos'], t['t_time'], 
                 t['t_pid'], t['t_spectator'], t['t_fully_contained'],
                 t['t_rec_energy'], t['t_is_unique'] ],[], []
-        
-
-        
-        
-        
-        
-        
-    
-     not
-            zerosf,
-            zerosf,
-            hit_x,
-            hit_y,
-            hit_z,
-            zerosf,
-            zerosf
-            ], axis=-1), rs,name="recHitFeatures")
-        
-        t = {
-            't_idx' : SimpleArray(isSignal, rs), #names are optional
-            't_energy' : SimpleArray(evt_trueE, rs),
-            't_pos' : SimpleArray(np.concatenate( (hit_x,hit_y,hit_z), axis=-1 ), rs), #three coordinates
-            't_time' : SimpleArray(zerosf, rs)  ,
-            't_pid' : SimpleArray(np.concatenate( [1+zerosf]+5*[zerosf],axis=-1 ), rs) , #6 truth classes
-            't_spectator' : SimpleArray(zerosf, rs),
-            't_fully_contained' : SimpleArray(zerosf + 1., rs),
-            't_rec_energy' : SimpleArray(evt_dE, rs),
-            't_is_unique' : SimpleArray(zerosi, rs) 
-            }
-        
-        
-        return [farr, 
-                t['t_idx'], t['t_energy'], t['t_pos'], t['t_time'], 
-                t['t_pid'], t['t_spectator'], t['t_fully_contained'],
-                t['t_rec_energy'], t['t_is_unique'] ],[], []
-        
-
-        
-<<<<<<< HEAD
-=======
-        
-        
-        
-        
-    
-    
-    
- 
->>>>>>> f03c6edf006cbaba92eea3c617ef24d49681be94
