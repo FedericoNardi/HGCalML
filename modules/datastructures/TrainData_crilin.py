@@ -41,7 +41,6 @@ class TrainData_crilin(TrainData_NanoML):
         evt_dE: the total energy deposited by the signal photon in the calorimeter
         evt_ID: an int label for each event -only for bookkeeping, should not be needed
         isSignal: a flag, -1 if only BIB noise, 0 if there is also signal hit deposition
-
         '''
         
         hit_x, rs = self.branchToFlatArray(tree["hit_x"], True)
@@ -91,46 +90,50 @@ class TrainData_crilin(TrainData_NanoML):
                 t['t_rec_energy'], t['t_is_unique'] ],[], []
         
 
-    def interpretAllModelInputs(self, ilist, returndict=True):
-        if not returndict:
-            raise ValueError('interpretAllModelInputs: Non-dict output is DEPRECATED. PLEASE REMOVE') 
         
-        '''
-        input: the full list of keras inputs
-        returns: td
-         - rechit feature array
-         - t_idx
-         - t_energy
-         - t_pos
-         - t_time
-         - t_pid :             non hot-encoded pid
-         - t_spectator :       spectator score, higher: further from shower core
-         - t_fully_contained : fully contained in calorimeter, no 'scraping'
-         - t_rec_energy :      the truth-associated deposited 
-                               (and rechit calibrated) energy, including fractional assignments)
-         - t_is_unique :       an index that is 1 for exactly one hit per truth shower
-         - row_splits
-         
-        '''
         
-        out = {
-            'features':ilist[0],
-            't_idx':ilist[2],
-            't_energy':ilist[4],
-            't_pos':ilist[6],
-            't_time':ilist[8],
-            't_pid':ilist[10],
-            't_spectator':ilist[12],
-            't_fully_contained':ilist[14],
-            'rechit_energy': ilist[16],
-            'row_splits':ilist[1]
+        
+        
+        
+    
+     not
+            zerosf,
+            zerosf,
+            hit_x,
+            hit_y,
+            hit_z,
+            zerosf,
+            zerosf
+            ], axis=-1), rs,name="recHitFeatures")
+        
+        t = {
+            't_idx' : SimpleArray(isSignal, rs), #names are optional
+            't_energy' : SimpleArray(evt_trueE, rs),
+            't_pos' : SimpleArray(np.concatenate( (hit_x,hit_y,hit_z), axis=-1 ), rs), #three coordinates
+            't_time' : SimpleArray(zerosf, rs)  ,
+            't_pid' : SimpleArray(np.concatenate( [1+zerosf]+5*[zerosf],axis=-1 ), rs) , #6 truth classes
+            't_spectator' : SimpleArray(zerosf, rs),
+            't_fully_contained' : SimpleArray(zerosf + 1., rs),
+            't_rec_energy' : SimpleArray(evt_dE, rs),
+            't_is_unique' : SimpleArray(zerosi, rs) 
             }
-        #keep length check for compatibility
-        if len(ilist)>16:
-            out['t_rec_energy'] = ilist[16]
-        if len(ilist)>18:
-            out['t_is_unique'] = ilist[18]
-        return out
+        
+        
+        return [farr, 
+                t['t_idx'], t['t_energy'], t['t_pos'], t['t_time'], 
+                t['t_pid'], t['t_spectator'], t['t_fully_contained'],
+                t['t_rec_energy'], t['t_is_unique'] ],[], []
+        
+
+        
+<<<<<<< HEAD
+=======
         
         
         
+        
+    
+    
+    
+ 
+>>>>>>> f03c6edf006cbaba92eea3c617ef24d49681be94

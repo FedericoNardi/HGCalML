@@ -65,28 +65,30 @@ make this about coordinate shifts
 
 '''
 
+batchnorm_options={}
+
 #loss options:
 loss_options={
-    'energy_loss_weight': .5,
+    'energy_loss_weight': .0, #you don't have an energy truth
     'q_min': 1.5,
-    's_b': 1.2, # Added bkg suppression factor
+    #'s_b': 1.2, # Added bkg suppression factor
     'use_average_cc_pos': 0.1,
     'classification_loss_weight':0.,
     'too_much_beta_scale': 1e-5 ,
     'position_loss_weight':1e-5,
     'timing_loss_weight':0.,
-    'beta_loss_scale':.25,
-    'beta_push': 0.05 #0.01 #push betas gently up at low values to not lose the gradients
+    #'beta_loss_scale':.25,
+    'beta_push': 0.0 # keep at zero
     }
 
 #elu behaves much better when training
-dense_activation='relu'
+dense_activation='elu'
 
-record_frequency=20
-plotfrequency=50 #plots every 1k batches
+record_frequency=10
+plotfrequency=10 #plots every 1k batches
 
-learningrate = 1e-6
-nbatch = 100000
+learningrate = 1e-3
+nbatch = 50000
 if globals.acc_ops_use_tf_gradients: #for tf gradients the memory is limited
     nbatch = 60000
 
@@ -107,20 +109,18 @@ def gravnet_model(Inputs,
     ##################### Input processing, no need to change much here ################
     ####################################################################################
 
-    is_preselected = True #isinstance(td, TrainData_PreselectionNanoML)
-
     pre_selection = td.interpretAllModelInputs(Inputs,returndict=True)
+    pre_selection = condition_input(pre_selection, no_scaling=True) 
+    pre_selection['features'] = ScaledGooeyBatchNorm2(fluidity_decay=0.1)(pre_selection['features']) #this can decay quickly, the input doesn't change 
+    pre_selection['coords'] = ScaledGooeyBatchNorm2(fluidity_decay=0.1)(pre_selection['coords'])
 
-    # Add extra layer of BatchNorm to the features
-    pre_selection['features'] = ScaledGooeyBatchNorm2()(pre_selection['features'])
-                                
-    pre_selection = condition_input(pre_selection, no_scaling=False ) 
-    
     t_spectator_weight = 0.*pre_selection['t_spectator']
     rs = pre_selection['row_splits']
                                
-    x_in = Concatenate()([pre_selection['t_pos'],
-                          pre_selection['features']])
+    x_in = pre_selection['features'] #Concatenate()([pre_selection['coords'],
+
+    print('x_in', x_in.shape)
+
                            
     x = x_in
     energy = pre_selection['rechit_energy']
@@ -130,6 +130,14 @@ def gravnet_model(Inputs,
     ####################################################################################
     ##################### now the actual model goes below ##############################
     ####################################################################################
+
+    # this is just for reference and occasionally plots the input shower(s)
+    c_coords = PlotCoordinates(plot_every = plot_debug_every, outdir = debug_outdir,
+                                   name='input_coords')([c_coords,
+                                                                    energy,
+                                                                    t_idx,
+                                                                    rs])
+
     
     allfeat = []
     
@@ -174,6 +182,8 @@ def gravnet_model(Inputs,
                                                                     energy,
                                                                     t_idx,
                                                                     rs]) 
+        
+        gncoords = StopGradient()(gncoords)
         x = Concatenate()([gncoords,x])           
         
         x = DistanceWeightedMessagePassing([64,64,32,32,16,16],
@@ -208,7 +218,7 @@ def gravnet_model(Inputs,
     
     #use a standard batch norm at the last stage
     x = ScaledGooeyBatchNorm2(**batchnorm_options)(x)
-    x = Concatenate()([c_coords]+[x])
+    #x = Concatenate()([c_coords]+[x])
     
     pred_beta, pred_ccoords, pred_dist,\
     pred_energy_corr, pred_energy_low_quantile, pred_energy_high_quantile,\
@@ -270,7 +280,7 @@ def gravnet_model(Inputs,
         pred_id,
         pred_dist,
         dict_output=True,
-        is_preselected_dataset=is_preselected
+        #is_preselected_dataset=is_preselected
         )
     
     return DictModel(inputs=Inputs, outputs=model_outputs)
@@ -309,7 +319,7 @@ samplepath=train.val_data.getSamplePath(train.val_data.samples[0])
 publishpath = "fnardi@cms:/lustre/cmswork/fnardi/crilin_training/"
 
 publishpath += [d  for d in train.outputDir.split('/') if len(d)][-1] 
-
+#publishpath = None
 cb = []
 
 
@@ -415,10 +425,12 @@ cb += [
 
 train.change_learning_rate(learningrate)
 
-model, history = train.trainModel(nepochs=5,
+model, history = train.trainModel(nepochs=200,
                                   batchsize=nbatch,
                                   additional_callbacks=cb)
 
+
+exit()
 
 # Note the submodel here its not just train.keras_model
 for l in train.keras_model.layers:
@@ -426,7 +438,7 @@ for l in train.keras_model.layers:
         l.q_min/=2.
 
 train.change_learning_rate(learningrate/2.)
-nbatch = 160000
+#nbatch = 160000
 if globals.acc_ops_use_tf_gradients: #for tf gradients the memory is limited
     nbatch = 60000
 
