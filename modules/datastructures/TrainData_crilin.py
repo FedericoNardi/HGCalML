@@ -134,11 +134,3 @@ class TrainData_crilin(TrainData_NanoML):
         
         
         
-        
-        
-        
-        
-    
-    
-    
- 
