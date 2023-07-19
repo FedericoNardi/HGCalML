@@ -54,6 +54,7 @@ class TrainData_crilin(TrainData_NanoML):
         #truth
         evt_dE = self.branchToFlatArray(tree["evt_dE"])
         evt_trueE = self.branchToFlatArray(tree["photon_E"])
+        hit_trueE = self.branchToFlatArray(tree["recHit_dE"])
         isSignal = self.branchToFlatArray(tree["isSignal"], dtype='int32')
         
         zerosi = 0 * isSignal
