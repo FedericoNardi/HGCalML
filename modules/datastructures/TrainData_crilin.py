@@ -90,3 +90,14 @@ class TrainData_crilin(TrainData_NanoML):
                 t['t_idx'], t['t_energy'], t['t_pos'], t['t_time'], 
                 t['t_pid'], t['t_spectator'], t['t_fully_contained'],
                 t['t_rec_energy'], t['t_is_unique'] ],[], []
+        
+
+        
+        
+        
+        
+        
+    
+    
+    
+ 
