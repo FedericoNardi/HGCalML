@@ -29,7 +29,9 @@ from GravNetLayersRagged import RaggedGravNet
 from GravNetLayersRagged import DistanceWeightedMessagePassing
 
 from Layers import RaggedGlobalExchange, DistanceWeightedMessagePassing
-from Layers import ScaledGooeyBatchNorm2 #make a new line
+from Layers import ScaledGooeyBatchNorm2 
+from Layers import LLFractionRegressor
+
 from Regularizers import AverageDistanceRegularizer
 
 from model_blocks import extent_coords_if_needed, re_integrate_to_full_hits
@@ -190,80 +192,11 @@ def gravnet_model(Inputs,
     x = Dense(64,activation=dense_activation)(x)
     x = Dense(64,activation=dense_activation)(x)
     x = Dense(64,activation=dense_activation)(x)
-    
-    
-    #######################################################################
-    ########### the part below should remain almost unchanged #############
-    ########### of course with the exception of the OC loss   #############
-    ########### weights                                       #############
-    #######################################################################
-    
-    #use a standard batch norm at the last stage
-    x = ScaledGooeyBatchNorm2(**batchnorm_options)(x)
-    #x = Concatenate()([c_coords]+[x])
-    
-    pred_beta, pred_ccoords, pred_dist,\
-    pred_energy_corr, pred_energy_low_quantile, pred_energy_high_quantile,\
-    pred_pos, pred_time, pred_time_unc, pred_id = create_outputs(x, n_ccoords=n_cluster_space_coordinates, fix_distance_scale=True)
-    
-    print("======= outputs created =======")
-    print("---> pred_beta: ", pred_beta)
-    print("---> pred_ccoords: ", pred_ccoords)
-    print("---> pred_dist: ", pred_dist)
-    print("---> pred_energy_corr: ", pred_energy_corr)
-    print("---> pred_energy_low_quantile: ", pred_energy_low_quantile)
-    print("---> pred_energy_high_quantile: ", pred_energy_high_quantile)
-    print("---> pred_pos: ", pred_pos)
-    print("---> pred_time: ", pred_time)
-    print("---> pred_time_unc: ", pred_time_unc)
-    print("---> pred_id: ", pred_id)
-    print("=====================")
 
+    signal_score = Dense(1, activation='sigmoid', name='signal_score')(x)
+    signal_score = LLFractionRegressor(name='signal_score_regressor', print_loss=True)([signal_score,pre_selection['t_sig_fraction']])                               
 
-    # loss
-    pred_beta = LLFullObjectCondensation(scale=1.,
-                                         use_energy_weights=True,
-                                         record_metrics=True,
-                                         print_loss=True,
-                                         name="FullOCLoss",
-                                         **loss_options
-                                         )(  # oc output and payload
-        [pred_beta, pred_ccoords, pred_dist,
-         pred_energy_corr,pred_energy_low_quantile,pred_energy_high_quantile,
-         pred_pos, pred_time, pred_time_unc,
-         pred_id] +
-        [energy]+
-        # truth information
-        [pre_selection['t_idx'] ,
-         pre_selection['t_energy'] ,
-         pre_selection['t_pos'] ,
-         pre_selection['t_time'] ,
-         pre_selection['t_pid'] ,
-         pre_selection['t_spectator'],
-         pre_selection['t_fully_contained'],
-         pre_selection['t_rec_energy'],
-         pre_selection['t_is_unique'],
-         pre_selection['row_splits']])
-                                         
-    #fast feedback
-    pred_ccoords = PlotCoordinates(plot_every=plot_debug_every, outdir = debug_outdir,
-                    name='condensation')([pred_ccoords, pred_beta,pre_selection['t_idx'],
-                                          rs])                                    
-
-    model_outputs = re_integrate_to_full_hits(
-        pre_selection,
-        pred_ccoords,
-        pred_beta,
-        pred_energy_corr,
-        pred_energy_low_quantile,
-        pred_energy_high_quantile,
-        pred_pos,
-        pred_time,
-        pred_id,
-        pred_dist,
-        dict_output=True,
-        #is_preselected_dataset=is_preselected
-        )
+    model_outputs = {'signal_fraction' : signal_score}
     
     return tf.keras.Model(inputs=Inputs, outputs=model_outputs)
     
