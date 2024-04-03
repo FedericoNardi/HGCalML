@@ -1,6 +1,23 @@
 HGCalML
 ===============================================================================
 
+Quick Start
+===========
+```
+ singularity run --nv -B /eos -B /afs /cvmfs/unpacked.cern.ch/registry.hub.docker.com/cernml4reco/deepjetcore4:latest
+ cd <workdir>
+ git clone --recursive https://github.com/cms-pepr/HGCalML
+ cd HGCalML
+ git checkout future_dev
+ source env.sh
+ ./setup.sh
+ cd Train
+ # the list of gpus to be used corresponds to their device numbers as given by nvidia-smi. Here is an example of 4 gpus
+ python3 config_trainer_jk.py configuration/rsu.yaml  /eos/home-p/phzehetn/ML4Reco/Data/Paper/Events/train_PU4/dataCollection.djcdc --no_wandb <output_directory> --gpu 0,1,2,3 
+```
+
+
+
 Requirements
   * DeepJetCore 4.X (``https://github.com/DL4Jets/DeepJetCore``)
   * DeepJetCore 4.X container (or latest version in general)
