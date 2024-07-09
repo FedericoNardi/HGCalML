@@ -1,0 +1,8 @@
+/media/disk/photon_data/v2/fixed/full/photons_175GeV_full.root
+/media/disk/photon_data/v2/fixed/full/photons_10GeV_full.root
+/media/disk/photon_data/v2/fixed/full/photons_75GeV_full.root
+/media/disk/photon_data/v2/fixed/full/photons_150GeV_full.root
+/media/disk/photon_data/v2/fixed/full/photons_25GeV_full.root
+/media/disk/photon_data/v2/fixed/full/photons_100GeV_full.root
+/media/disk/photon_data/v2/fixed/full/photons_125GeV_full.root
+/media/disk/photon_data/v2/fixed/full/photons_50GeV_full.root

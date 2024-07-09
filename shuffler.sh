@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the folder path
-folder_path="MuColl_tuples"
+folder_path="/media/disk/photon_data/v2/unif"
 
 # Find all files in the folder and its subfolders
 file_list=$(find "$folder_path" -type f)

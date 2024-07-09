@@ -1,3 +1,5 @@
+*.root
+*.gz
 *.pyc
 
 .vscode

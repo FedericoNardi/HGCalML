@@ -1,162 +1,232 @@
 #!/usr/bin/env python3
-import os
-import gzip
+
 import pickle
-import numpy as np
-
 import mgzip
+import numpy as np
+import matplotlib.pyplot as plt
+import os
 
-import argparse
-import time
+def calculate_cluster_distances(pred_beta, pred_dist, ccoords, t_d):
+    beta_max, beta_max_id= *[pred_beta.max()], *[pred_beta.argmax()]
+    #print(beta_max)
+    beta_max_coords = ccoords[beta_max_id]
+    distances = np.sqrt((ccoords[:,0]-np.ones_like(ccoords[:,0])*beta_max_coords[0])**2 + 
+                   (ccoords[:,1]-np.ones_like(ccoords[:,0])*beta_max_coords[1])**2 + 
+                   (ccoords[:,2]-np.ones_like(ccoords[:,0])*beta_max_coords[2])**2)
+    return (np.where(distances<t_d*pred_dist[beta_max_id],1,0), distances)
 
-import pandas as pd
+energies = [10, 25, 50, 75, 100, 125, 150] #, 175]
 
-from OCHits2Showers import OCHits2ShowersLayer, process_endcap, OCGatherEnergyCorrFac
-from ShowersMatcher import ShowersMatcher
-from hplots.hgcal_analysis_plotter import HGCalAnalysisPlotter
+# Generate as many subplots as len(energies)
+fig, axs = plt.subplots(len(energies), 1, figsize=(8, 15), sharex = False)
+fig.text(0.5, 0.08, r'$E_{reco}$/$E_{true}$', ha='center')
+fig.text(0.04, 0.5, 'Counts', va='center', rotation='vertical')
 
-def analyse(preddir, pdfpath, beta_threshold, distance_threshold, iou_threshold, matching_mode, analysisoutpath, nfiles,
-            local_distance_scaling, is_soft, de_e_cut, angle_cut, kill_pu=False, filter_pu=False, toydata=False):
-    hits2showers = OCHits2ShowersLayer(beta_threshold, distance_threshold, local_distance_scaling)
-    showers_matcher = ShowersMatcher(matching_mode, iou_threshold, de_e_cut, angle_cut)
+full_t_energies = []
+full_p_energies = []
 
-    energy_gatherer = OCGatherEnergyCorrFac()
+dirname = 'pred_cut_t/'
+PATH_IN = '/media/disk/photon_data/predictions/'
+PATH_OUT = '/home/centos/HGCalML/'
 
-    files_to_be_tested = [os.path.join(preddir, x) for x in os.listdir(preddir) if x.endswith('.bin.gz')]
-    if toydata:
-        extra_files = [os.path.join(preddir, x) for x in os.listdir(preddir) if ( x.endswith('.pkl') and x.startswith('pred') )]
-    if nfiles!=-1:
-        files_to_be_tested = files_to_be_tested[0:min(nfiles, len(files_to_be_tested))]
+for i in range(len(energies)):
 
-    showers_dataframe = pd.DataFrame()
-    event_id = 0
+    reco_energies = []
+    evt_energies = []
 
-    for i, file in enumerate(files_to_be_tested):
-        print("Analysing file %d/%d"% (i, len(files_to_be_tested)))
-        with mgzip.open(file, 'rb') as f:
-            file_data = pickle.load(f)
-            if toydata:
-                with open(extra_files[i], 'rb') as xf: 
-                    xfile = pickle.load(xf)
-            for j, endcap_data in enumerate(file_data): 
-                if toydata:
-                    t_min_bias = xfile[j][0][0]
-                print("Analysing endcap %d/%d" % (j, len(file_data)))
-                stopwatch = time.time()
-                features_dict, truth_dict, predictions_dict = endcap_data 
-                if filter_pu and not toydata:
-                    print("Filter PU only possible if t_min_bias is provided.\
-                            currently this only exists for toydata")
-                if filter_pu and toydata:
-                    pu_filter = np.array(t_min_bias == 0).flatten()
-                    for key in predictions_dict.keys():
-                        try:
-                            predictions_dict[key] = predictions_dict[key][pu_filter]
-                        except:
-                            print(key, "no filter applied")
-                    for key in features_dict.keys():
-                        try:
-                            features_dict[key] = features_dict[key][pu_filter]
-                        except:
-                            print(key, "no filter applied")
-                    for key in truth_dict.keys():
-                        try:
-                            truth_dict[key] = truth_dict[key][pu_filter]
-                        except:
-                            print(key, "no filter applied")
-                else:
-                    pu_filter = None
+    for fname in os.listdir(PATH_IN+dirname):   
+        if str(energies[i])+'GeV' in fname:
+            with mgzip.open(PATH_IN+dirname+fname) as predictions:
+                predictions = pickle.load(predictions)  
+                for event in predictions: 
+                    pred_id = event[2]['pred_id'].argmax(axis=1)
+                    pred_beta = event[2]['pred_beta']
+                    pred_ene = event[2]['rechit_energy']
+                    pred_dist = event[2]['pred_dist']
+                    ccoords = event[2]['pred_ccoords']
+                    cluster_idx, cluster_distances = calculate_cluster_distances(pred_beta, pred_dist, ccoords,1.)
+                    mask = cluster_idx==1.
+                    reco_energies.append(pred_ene[mask].sum())
+                    full_p_energies.append(pred_ene[mask].sum())
+                    evt_energies.append( np.unique(event[1]['truthHitAssignedEnergies'])[0] )
+                    full_t_energies.append( np.unique(event[1]['truthHitAssignedEnergies'])[0] )
+    
+    ratios = np.array(reco_energies)/np.array(evt_energies)
 
-                processed_pred_dict, pred_shower_alpha_idx = process_endcap(hits2showers, energy_gatherer, features_dict, predictions_dict)
+    axs[i].hist(ratios, bins=50, alpha=0.25, range=(0.5,1.5), label='Reco/True')
+    axs[i].text(0.05,0.8,str(energies[i])+' GeV', transform=axs[i].transAxes)
+plt.savefig(PATH_OUT+'analysis/timing/'+'energy_ratios_t.jpg')
+# Close figure
+plt.close()
 
-                print('took',time.time()-stopwatch,'s for inference clustering')
-                stopwatch = time.time()
-                showers_matcher.set_inputs(
-                    features_dict=features_dict,
-                    truth_dict=truth_dict,
-                    predictions_dict=processed_pred_dict,
-                    pred_alpha_idx=pred_shower_alpha_idx
-                )
-                showers_matcher.process()
-                print('took',time.time()-stopwatch,'s to match')
-                stopwatch = time.time()
-                dataframe = showers_matcher.get_result_as_dataframe()
-                print(dataframe.head())
-                print('took',time.time()-stopwatch,'s to make data frame')
-                dataframe['event_id'] = event_id
-                event_id += 1
-                if kill_pu:
-                    from globals import pu
-                    if len(dataframe[dataframe['truthHitAssignementIdx']>=pu.t_idx_offset]):
-                        print('\nWARNING REMOVING PU TRUTH MATCHED SHOWERS, HACK.\n')
-                        dataframe = dataframe[dataframe['truthHitAssignementIdx']<pu.t_idx_offset]
-                showers_dataframe = pd.concat((showers_dataframe, dataframe))
+from scipy.optimize import curve_fit
 
-    # This is only to write to pdf files
-    scalar_variables = {
-        'beta_threshold': str(beta_threshold),
-        'distance_threshold': str(distance_threshold),
-        'iou_threshold': str(iou_threshold),
-        'matching_mode': str(matching_mode),
-        'is_soft': str(is_soft),
-        'de_e_cut': str(de_e_cut),
-        'angle_cut': str(angle_cut),
-    }
+unique_energies = np.unique(full_t_energies)
 
-    if len(analysisoutpath) > 0:
-        analysis_data = {
-            'showers_dataframe' : showers_dataframe,
-            'events_dataframe' : None,
-            'scalar_variables' : scalar_variables,
-        }
-        with gzip.open(analysisoutpath, 'wb') as f:
-            print("Writing dataframes to pickled file",analysisoutpath)
-            pickle.dump(analysis_data,f)
+# Generate as many subplots as len(energies)
 
-    if len(pdfpath)>0:
-        plotter = HGCalAnalysisPlotter()
-        plotter.set_data(showers_dataframe, None, '', pdfpath, scalar_variables=scalar_variables)
-        plotter.process()
+fig, axs = plt.subplots(len(energies), 1, figsize=(8, 15))
+fig.text(0.5, 0.08, r'$E_{reco}$/$E_{true}$', ha='center')
+fig.text(0.04, 0.5, 'Counts', va='center', rotation='vertical')
 
+means_t = []
+sigmas_t = []
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        'Analyse predictions from object condensation and plot relevant results')
-    parser.add_argument('preddir',
-                        help='Directory with .bin.gz files or a txt file with full paths of the bin gz files from the prediction.')
-    parser.add_argument('-p',
-                        help='Output directory for the final analysis pdf file (otherwise, it won\'t be produced)',
-                        default='')
-    parser.add_argument('-b', help='Beta threshold (default 0.1)', default='0.1')
-    parser.add_argument('-d', help='Distance threshold (default 0.5)', default='0.5')
-    parser.add_argument('-i', help='IOU threshold (default 0.1)', default='0.1')
-    parser.add_argument('-m', help='Matching mode', default='iou_max')
-    parser.add_argument('--analysisoutpath', help='Will dump analysis data to a file to remake plots without re-running everything.',
-                        default='')
-    parser.add_argument('--nfiles', help='Maximum number of files. -1 for everything in the preddir',
-                        default=-1)
-    parser.add_argument('--no_local_distance_scaling', help='With local distance scaling', action='store_true')
-    parser.add_argument('--de_e_cut', help='dE/E threshold to allow match.', default=-1)
-    parser.add_argument('--angle_cut', help='Angle cut for angle based matching', default=-1)
-    parser.add_argument('--no_soft', help='Use condensate op', action='store_true')
-    parser.add_argument('--filter_pu', help='Filter PU', action='store_true')
-    parser.add_argument('--toydata', help='Use toy detector', action='store_true')
+i=0
 
-    args = parser.parse_args()
+for energy in unique_energies:
+    
+    sel = np.array(full_t_energies)
+    mask = sel==energy
+    hist = axs[i].hist(np.array(full_p_energies)[mask],bins=30, alpha=0.25, range = [0.8*energy, 1.2*energy],density=True)
+    axs[i].text(0.05,0.8,str(energy)+' GeV', transform=axs[i].transAxes)
+    vals=hist[0]
+    centers=hist[1][1:]
+    import scipy.stats as stats
+    def fit_f(x, beta, m, loc, scale):
+        return stats.crystalball.pdf(x, beta, m, loc, scale)
+    weight = np.where(vals<10,1000,vals)
+    popt, pcov = curve_fit(fit_f, 
+                           centers, 
+                           vals, 
+                           # sigma=np.power(weight,-0.5), 
+                           maxfev=100000,
+                           p0=[.5,2.,energy,0.1*energy]
+                           )
+    means_t.append(popt[2])
+    sigmas_t.append(popt[3])
+    axs[i].plot(centers, fit_f(centers, *popt), 'r-', label='fit')
+    i+=1
+print("---> MEANS_T: ",means_t)
 
-    analyse(preddir=args.preddir, 
-            pdfpath=args.p, 
-            beta_threshold=float(args.b), 
-            distance_threshold=float(args.d),
-            iou_threshold=float(args.i), 
-            matching_mode=args.m, 
-            analysisoutpath=args.analysisoutpath,
-            nfiles=int(args.nfiles), 
-            local_distance_scaling=not args.no_local_distance_scaling,
-            is_soft=not args.no_soft, 
-            de_e_cut=float(args.de_e_cut), 
-            angle_cut=float(args.angle_cut), 
-            filter_pu=bool(args.filter_pu),
-            toydata=bool(args.toydata))
+# plot vertical line over all subplots
+i = 0
+for ax in axs:
+    ax.axvline(means_t[i], color='r', linestyle='--')
+    # add shaded region corresponding to rms in each subplot
+    ax.axvspan(means_t[i]-sigmas_t[i], means_t[i]+sigmas_t[i], alpha=0.15, color='red')
+    i+=1
+plt.savefig(PATH_OUT+'analysis/timing/'+'energy_ratios_t_fit.jpg')
+plt.close()
+
+# Generate as many subplots as len(energies)
+fig, axs = plt.subplots(len(energies), 1, figsize=(8, 15), sharex = False)
+fig.text(0.5, 0.08, r'$E_{reco}$/$E_{true}$', ha='center')
+fig.text(0.04, 0.5, 'Counts', va='center', rotation='vertical')
+
+energy = [10, 25, 50, 75, 100, 125, 150, 175]
+
+full_t_energies = []
+full_p_energies = []
+
+dirname = 'pred_cut_no_t/'
+PATH_IN = '/media/disk/photon_data/predictions/'
+PATH_OUT = '/home/centos/HGCalML/'
+
+for i in range(len(energies)):
+
+    reco_energies = []
+    evt_energies = []
+
+    for fname in os.listdir(PATH_IN+dirname):   
+        if str(energies[i])+'GeV' in fname:
+            with mgzip.open(PATH_IN+dirname+fname) as predictions:
+                predictions = pickle.load(predictions)  
+                for event in predictions: 
+                    pred_id = event[2]['pred_id'].argmax(axis=1)
+                    pred_beta = event[2]['pred_beta']
+                    pred_ene = event[2]['rechit_energy']
+                    pred_dist = event[2]['pred_dist']
+                    ccoords = event[2]['pred_ccoords']
+                    cluster_idx, cluster_distances = calculate_cluster_distances(pred_beta, pred_dist, ccoords,1.)
+                    mask = cluster_idx==1.
+                    reco_energies.append(pred_ene[mask].sum())
+                    full_p_energies.append(pred_ene[mask].sum())
+                    evt_energies.append( np.unique(event[1]['truthHitAssignedEnergies'])[0] )
+                    full_t_energies.append( np.unique(event[1]['truthHitAssignedEnergies'])[0] )
+    
+    ratios = np.array(reco_energies)/np.array(evt_energies)
+
+    axs[i].hist(ratios, bins=50, alpha=0.25, range=(0.5,1.5), label='Reco/True')
+    axs[i].text(0.05,0.8,str(energies[i])+' GeV', transform=axs[i].transAxes)
+plt.savefig(PATH_OUT+'analysis/timing/'+'energy_ratios.jpg')
+# Close figure
+plt.close()
 
 
+from scipy.optimize import curve_fit
+
+unique_energies = np.unique(full_t_energies)
+
+# Generate as many subplots as len(energies)
+
+fig, axs = plt.subplots(len(energies), 1, figsize=(8, 15))
+fig.text(0.5, 0.08, r'$E_{reco}$/$E_{true}$', ha='center')
+fig.text(0.04, 0.5, 'Counts', va='center', rotation='vertical')
+
+means = []
+sigmas = []
+
+i=0
+
+for energy in unique_energies:
+    
+    sel = np.array(full_t_energies)
+    mask = sel==energy
+    hist = axs[i].hist(np.array(full_p_energies)[mask],bins=30, alpha=0.25, range = [0.8*energy, 1.2*energy],density=True)
+    axs[i].text(0.05,0.8,str(energy)+' GeV', transform=axs[i].transAxes)
+    vals=hist[0]
+    centers=hist[1][1:]
+    import scipy.stats as stats
+    def fit_f(x, beta, m, loc, scale):
+        return stats.crystalball.pdf(x, beta, m, loc, scale)
+    weight = np.where(vals<10,1000,vals)
+    popt, pcov = curve_fit(fit_f, 
+                           centers, 
+                           vals, 
+                           # sigma=np.power(weight,-0.5), 
+                           maxfev=100000,
+                           p0=[.5,2.,energy,0.1*energy]
+                           )
+    means.append(popt[2])
+    sigmas.append(popt[3])
+    axs[i].plot(centers, fit_f(centers, *popt), 'r-', label='fit')
+    i+=1
+
+# plot vertical line over all subplots
+i = 0
+for ax in axs:
+    ax.axvline(means[i], color='r', linestyle='--')
+    # add shaded region corresponding to rms in each subplot
+    ax.axvspan(means[i]-sigmas[i], means[i]+sigmas[i], alpha=0.15, color='red')
+    i+=1
+plt.savefig(PATH_OUT+'analysis/timing/'+'energy_ratios_fit.jpg')
+plt.close()
+
+def resFunction(energies,a,b):
+   return np.sqrt( np.square(a*np.power(energies,-0.5)) + b*b*(np.ones_like(energies)) )
+
+resolution = np.abs(sigmas)/np.array(means)
+resolution_t = np.abs(sigmas_t)/np.array(means_t)
+
+# popt, pcov = curve_fit(resFunction, unique_energies, resolution, maxfev=5000, p0=[0.1,0.1])
+
+plt.figure()
+plt.plot(unique_energies, 100*resolution, 'gx',linewidth=0.5, label='OC values')
+plt.plot(unique_energies, 100*resolution_t, 'rx',linewidth=0.5, label='OC values time')
+# plt.plot(unique_energies, 100*resFunction(unique_energies, *popt), 'g-', label='OC fit')
+# popt_t, pcov_t = curve_fit(resFunction, unique_energies, resolution_t, maxfev=5000, p0=[0.1,0.1])
+# plt.plot(unique_energies, 100*resFunction(unique_energies, *popt_t), 'r-', label='OC fit with time')
+plt.xlabel('True energy [GeV]')
+plt.ylabel(r'$\sigma/<E>$ [%]')
+plt.grid(linewidth=0.5,linestyle='--')
+# print("OC Resolution fit parameters: ", popt)
+# print("OC Resolution fit parameters with time: ", popt_t)
+
+PPFA = np.array([4.23, 3.69, 2.30, 1.76, 1.62, 1.40, 1.23]) #, 1.21])
+popt_, pcov_ = curve_fit(resFunction, unique_energies, 0.01*PPFA, maxfev=5000, p0=[0.1,0.1])
+plt.plot(unique_energies, PPFA, 'c+',linewidth=0.5, label='PandoraPFA values')
+plt.plot(unique_energies, 100*resFunction(unique_energies, *popt_), 'c-', label='PandoraPFA fit')
+plt.legend()
+print("PPFA Resolution fit parameters: ", popt_)
+plt.savefig(PATH_OUT+'analysis/timing/'+'resolution.jpg')

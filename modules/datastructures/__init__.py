@@ -12,8 +12,6 @@ structure_list=[]
 for module_name in modules:
     module = __import__(module_name, globals(), locals(), [module_name])
     for model_name in [i for i in dir(module) if 'TrainData' in i]:
-        
-        
         model = getattr(module, model_name)
         globals()[model_name] = model
         locals( )[model_name] = model
