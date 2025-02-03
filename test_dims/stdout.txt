@@ -1,0 +1,1683 @@
+List kength:  22
+UNIQUE IDX:  KerasTensor(type_spec=TensorSpec(shape=(None, 1), dtype=tf.int32, name='9'), name='9', description="created by layer '9'")
+List kength:  22
+UNIQUE IDX:  KerasTensor(type_spec=TensorSpec(shape=(None, 1), dtype=tf.int32, name='9'), name='9', description="created by layer '9'")
+reduce_loss returning zero loss Tensor("reduce_loss/SelectV2:0", shape=(), dtype=float32)
+reduce_loss returning zero loss Tensor("dict_model/reduce_loss/SelectV2:0", shape=(), dtype=float32)
+reduce_loss returning zero loss Tensor("SelectV2:0", shape=(), dtype=float32)
+reduce_loss returning zero loss Tensor("SelectV2:0", shape=(), dtype=float32)
+reduce_loss returning zero loss Tensor("reduce_loss/SelectV2:0", shape=(), dtype=float32)
+reduce_loss returning zero loss Tensor("reduce_loss/SelectV2:0", shape=(), dtype=float32)
+reduce_loss returning zero loss Tensor("SelectV2:0", shape=(), dtype=float32)
+reduce_loss returning zero loss Tensor("SelectV2:0", shape=(), dtype=float32)
+setting up callbacks
+starting training
+setting up generator... can take a while
+>>>> epoch 0 / 80
+training batches:  1326
+validation batches:  164
+reduce_loss loss 13893.023
+Model: "dict_model"
+__________________________________________________________________________________________________
+Layer (type)                    Output Shape         Param #     Connected to                     
+==================================================================================================
+recHitFeatures (InputLayer)     [(None, 10)]         0                                            
+__________________________________________________________________________________________________
+recHitFeatures_rowsplits (Input [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+scaled_gooey_batch_norm2 (Scale (None, 10)           41          recHitFeatures[0][0]             
+__________________________________________________________________________________________________
+cast_row_splits (CastRowSplits) (None,)              0           recHitFeatures_rowsplits[0][0]   
+__________________________________________________________________________________________________
+ragged_global_exchange (RaggedG (None, 40)           0           scaled_gooey_batch_norm2[0][0]   
+                                                                 cast_row_splits[0][0]            
+__________________________________________________________________________________________________
+dense_6 (Dense)                 (None, 64)           2624        ragged_global_exchange[0][0]     
+__________________________________________________________________________________________________
+dense_7 (Dense)                 (None, 64)           4160        dense_6[0][0]                    
+__________________________________________________________________________________________________
+select_features_2 (SelectFeatur (None, 3)            0           recHitFeatures[0][0]             
+__________________________________________________________________________________________________
+dense_8 (Dense)                 (None, 64)           4160        dense_7[0][0]                    
+__________________________________________________________________________________________________
+scaled_gooey_batch_norm2_1 (Sca (None, 3)            13          select_features_2[0][0]          
+__________________________________________________________________________________________________
+scaled_gooey_batch_norm2_2 (Sca (None, 64)           257         dense_8[0][0]                    
+__________________________________________________________________________________________________
+concatenate (Concatenate)       (None, 67)           0           scaled_gooey_batch_norm2_1[0][0] 
+                                                                 scaled_gooey_batch_norm2_2[0][0] 
+__________________________________________________________________________________________________
+ragged_grav_net (RaggedGravNet) ((None, 64), (None,  17299       concatenate[0][0]                
+                                                                 cast_row_splits[0][0]            
+__________________________________________________________________________________________________
+stop_gradient (StopGradient)    (None, 6)            0           ragged_grav_net[0][1]            
+__________________________________________________________________________________________________
+concatenate_1 (Concatenate)     (None, 131)          0           concatenate[0][0]                
+                                                                 ragged_grav_net[0][0]            
+__________________________________________________________________________________________________
+concatenate_2 (Concatenate)     (None, 137)          0           stop_gradient[0][0]              
+                                                                 concatenate_1[0][0]              
+__________________________________________________________________________________________________
+average_distance_regularizer (A (None, 65)           0           ragged_grav_net[0][3]            
+__________________________________________________________________________________________________
+distance_weighted_message_passi (None, 585)          24864       concatenate_2[0][0]              
+                                                                 ragged_grav_net[0][2]            
+                                                                 average_distance_regularizer[0][0
+__________________________________________________________________________________________________
+scaled_gooey_batch_norm2_3 (Sca (None, 585)          2341        distance_weighted_message_passing
+__________________________________________________________________________________________________
+dense_past_mp_0 (Dense)         (None, 64)           37504       scaled_gooey_batch_norm2_3[0][0] 
+__________________________________________________________________________________________________
+dense_18 (Dense)                (None, 64)           4160        dense_past_mp_0[0][0]            
+__________________________________________________________________________________________________
+dense_19 (Dense)                (None, 64)           4160        dense_18[0][0]                   
+__________________________________________________________________________________________________
+scaled_gooey_batch_norm2_4 (Sca (None, 64)           257         dense_19[0][0]                   
+__________________________________________________________________________________________________
+ragged_global_exchange_1 (Ragge (None, 256)          0           scaled_gooey_batch_norm2_4[0][0] 
+                                                                 cast_row_splits[0][0]            
+__________________________________________________________________________________________________
+dense_20 (Dense)                (None, 64)           16448       ragged_global_exchange_1[0][0]   
+__________________________________________________________________________________________________
+dense_21 (Dense)                (None, 64)           4160        dense_20[0][0]                   
+__________________________________________________________________________________________________
+dense_22 (Dense)                (None, 64)           4160        dense_21[0][0]                   
+__________________________________________________________________________________________________
+scaled_gooey_batch_norm2_5 (Sca (None, 64)           257         dense_22[0][0]                   
+__________________________________________________________________________________________________
+concatenate_3 (Concatenate)     (None, 67)           0           scaled_gooey_batch_norm2_1[0][0] 
+                                                                 scaled_gooey_batch_norm2_5[0][0] 
+__________________________________________________________________________________________________
+ragged_grav_net_1 (RaggedGravNe ((None, 64), (None,  17299       concatenate_3[0][0]              
+                                                                 cast_row_splits[0][0]            
+__________________________________________________________________________________________________
+stop_gradient_1 (StopGradient)  (None, 6)            0           ragged_grav_net_1[0][1]          
+__________________________________________________________________________________________________
+concatenate_4 (Concatenate)     (None, 131)          0           concatenate_3[0][0]              
+                                                                 ragged_grav_net_1[0][0]          
+__________________________________________________________________________________________________
+concatenate_5 (Concatenate)     (None, 137)          0           stop_gradient_1[0][0]            
+                                                                 concatenate_4[0][0]              
+__________________________________________________________________________________________________
+average_distance_regularizer_1  (None, 65)           0           ragged_grav_net_1[0][3]          
+__________________________________________________________________________________________________
+distance_weighted_message_passi (None, 585)          24864       concatenate_5[0][0]              
+                                                                 ragged_grav_net_1[0][2]          
+                                                                 average_distance_regularizer_1[0]
+__________________________________________________________________________________________________
+scaled_gooey_batch_norm2_6 (Sca (None, 585)          2341        distance_weighted_message_passing
+__________________________________________________________________________________________________
+dense_past_mp_1 (Dense)         (None, 64)           37504       scaled_gooey_batch_norm2_6[0][0] 
+__________________________________________________________________________________________________
+dense_32 (Dense)                (None, 64)           4160        dense_past_mp_1[0][0]            
+__________________________________________________________________________________________________
+dense_33 (Dense)                (None, 64)           4160        dense_32[0][0]                   
+__________________________________________________________________________________________________
+scaled_gooey_batch_norm2_7 (Sca (None, 64)           257         dense_33[0][0]                   
+__________________________________________________________________________________________________
+concatenate_6 (Concatenate)     (None, 131)          0           scaled_gooey_batch_norm2_1[0][0] 
+                                                                 scaled_gooey_batch_norm2_4[0][0] 
+                                                                 scaled_gooey_batch_norm2_7[0][0] 
+__________________________________________________________________________________________________
+dense_34 (Dense)                (None, 64)           8448        concatenate_6[0][0]              
+__________________________________________________________________________________________________
+dense_35 (Dense)                (None, 64)           4160        dense_34[0][0]                   
+__________________________________________________________________________________________________
+dense_36 (Dense)                (None, 64)           4160        dense_35[0][0]                   
+__________________________________________________________________________________________________
+scaled_gooey_batch_norm2_8 (Sca (None, 64)           257         dense_36[0][0]                   
+__________________________________________________________________________________________________
+dense_37 (Dense)                (None, 1024)         66560       scaled_gooey_batch_norm2_8[0][0] 
+__________________________________________________________________________________________________
+dense_38 (Dense)                (None, 512)          524800      dense_37[0][0]                   
+__________________________________________________________________________________________________
+dense_39 (Dense)                (None, 128)          65664       dense_38[0][0]                   
+__________________________________________________________________________________________________
+dense_40 (Dense)                (None, 64)           8256        dense_39[0][0]                   
+__________________________________________________________________________________________________
+dense_41 (Dense)                (None, 32)           2080        dense_40[0][0]                   
+__________________________________________________________________________________________________
+dense_42 (Dense)                (None, 16)           528         dense_41[0][0]                   
+__________________________________________________________________________________________________
+dense_43 (Dense)                (None, 1)            17          dense_42[0][0]                   
+__________________________________________________________________________________________________
+2 (InputLayer)                  [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+reduce_loss (LLReduceLoss)      (None, 1)            3           dense_43[0][0]                   
+                                                                 2[0][0]                          
+__________________________________________________________________________________________________
+1 (InputLayer)                  [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+1_rowsplits (InputLayer)        [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+2_rowsplits (InputLayer)        [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+3 (InputLayer)                  [(None, 3)]          0                                            
+__________________________________________________________________________________________________
+3_rowsplits (InputLayer)        [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+4 (InputLayer)                  [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+4_rowsplits (InputLayer)        [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+5 (InputLayer)                  [(None, 6)]          0                                            
+__________________________________________________________________________________________________
+5_rowsplits (InputLayer)        [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+6 (InputLayer)                  [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+6_rowsplits (InputLayer)        [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+7 (InputLayer)                  [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+7_rowsplits (InputLayer)        [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+8 (InputLayer)                  [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+8_rowsplits (InputLayer)        [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+9 (InputLayer)                  [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+9_rowsplits (InputLayer)        [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+10 (InputLayer)                 [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+10_rowsplits (InputLayer)       [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+tf.__operators__.getitem (Slici (1,)                 0           reduce_loss[0][0]                
+==================================================================================================
+Total params: 902,383
+Trainable params: 899,363
+Non-trainable params: 3,020
+__________________________________________________________________________________________________
+None
+reduce_loss loss 18601.555
+reduce_loss loss 11336.9375
+reduce_loss loss 9625.845
+reduce_loss loss 9005.04
+reduce_loss loss 8654.645
+reduce_loss loss 4977.8003
+reduce_loss loss 9178.966
+reduce_loss loss 5617.376
+reduce_loss loss 1585.6116
+reduce_loss loss 9632.615
+reduce_loss loss 3929.5515
+reduce_loss loss 1821.6022
+reduce_loss loss 3016.7349
+reduce_loss loss 4855.717
+reduce_loss loss 6902.504
+reduce_loss loss 2785.0789
+reduce_loss loss 1677.387
+reduce_loss loss 2249.54
+reduce_loss loss 2563.302
+reduce_loss loss 1596.248
+reduce_loss loss 1446.7815
+reduce_loss loss 1845.0219
+reduce_loss loss 377.46063
+reduce_loss loss 3990.3098
+reduce_loss loss 1242.7473
+reduce_loss loss 3987.6323
+reduce_loss loss 1032.8562
+reduce_loss loss 565.3441
+reduce_loss loss 536.6641
+reduce_loss loss 1364.8408
+reduce_loss loss 396.84424
+reduce_loss loss 1347.8207
+reduce_loss loss 1837.7004
+reduce_loss loss 3537.5881
+reduce_loss loss 1206.5638
+reduce_loss loss 1205.3403
+reduce_loss loss 2872.6748
+reduce_loss loss 672.7701
+reduce_loss loss 128.95975
+reduce_loss loss 3100.3599
+reduce_loss loss 217.37054
+reduce_loss loss 4345.6074
+reduce_loss loss 646.2262
+reduce_loss loss 933.0117
+reduce_loss loss 777.51154
+reduce_loss loss 3320.3481
+reduce_loss loss 1423.8871
+reduce_loss loss 701.8877
+reduce_loss loss 882.80164
+reduce_loss loss 490.17316
+reduce_loss loss 248.27888
+reduce_loss loss 5813.3643
+reduce_loss loss 2085.4639
+reduce_loss loss 1521.1803
+reduce_loss loss 541.2279
+reduce_loss loss 2827.6926
+reduce_loss loss 1480.1171
+reduce_loss loss 911.68414
+reduce_loss loss 1780.2152
+reduce_loss loss 682.4639
+reduce_loss loss 349.36984
+reduce_loss loss 725.80804
+reduce_loss loss 1141.5668
+reduce_loss loss 518.56647
+reduce_loss loss 1864.7769
+reduce_loss loss 191.29512
+reduce_loss loss 477.7724
+reduce_loss loss 1085.9916
+reduce_loss loss 844.6657
+reduce_loss loss 207.65302
+reduce_loss loss 592.58673
+reduce_loss loss 385.7047
+reduce_loss loss 1957.4983
+reduce_loss loss 989.52826
+reduce_loss loss 1076.3094
+reduce_loss loss 2940.5378
+reduce_loss loss 351.5082
+reduce_loss loss 760.2344
+reduce_loss loss 991.7664
+reduce_loss loss 200.9571
+reduce_loss loss 945.9539
+reduce_loss loss 282.8324
+reduce_loss loss 1061.8282
+reduce_loss loss 138.0043
+reduce_loss loss 1153.5243
+reduce_loss loss 1401.8022
+reduce_loss loss 567.385
+reduce_loss loss 1255.5024
+reduce_loss loss 648.16724
+reduce_loss loss 275.28903
+reduce_loss loss 1526.1604
+reduce_loss loss 602.2326
+reduce_loss loss 736.83014
+reduce_loss loss 838.6064
+reduce_loss loss 1029.2484
+reduce_loss loss 392.4962
+reduce_loss loss 578.0165
+reduce_loss loss 447.72037
+reduce_loss loss 198.3993
+reduce_loss loss 653.39496
+reduce_loss loss 529.40936
+reduce_loss loss 2286.8125
+reduce_loss loss 292.97415
+reduce_loss loss 848.246
+reduce_loss loss 1457.7947
+reduce_loss loss 368.6441
+reduce_loss loss 969.28046
+reduce_loss loss 701.15295
+reduce_loss loss 1386.531
+reduce_loss loss 442.81876
+reduce_loss loss 689.59174
+reduce_loss loss 235.07787
+reduce_loss loss 505.52765
+reduce_loss loss 2519.1997
+reduce_loss loss 347.214
+reduce_loss loss 1800.1472
+reduce_loss loss 465.1658
+reduce_loss loss 1353.2161
+reduce_loss loss 1195.7823
+reduce_loss loss 291.41034
+reduce_loss loss 555.1633
+reduce_loss loss 208.06108
+reduce_loss loss 2335.8357
+reduce_loss loss 1219.1968
+reduce_loss loss 877.59875
+reduce_loss loss 604.4857
+reduce_loss loss 1930.4606
+reduce_loss loss 363.52554
+reduce_loss loss 742.28656
+reduce_loss loss 549.6826
+reduce_loss loss 312.28836
+reduce_loss loss 329.3019
+reduce_loss loss 1395.8636
+reduce_loss loss 902.9838
+reduce_loss loss 665.44934
+reduce_loss loss 3245.4546
+reduce_loss loss 519.79376
+reduce_loss loss 390.33313
+reduce_loss loss 1414.9944
+reduce_loss loss 546.204
+reduce_loss loss 952.96423
+reduce_loss loss 255.69427
+reduce_loss loss 215.12064
+reduce_loss loss 1036.3733
+reduce_loss loss 491.092
+reduce_loss loss 1098.712
+reduce_loss loss 738.5754
+reduce_loss loss 760.85693
+reduce_loss loss 1120.2671
+reduce_loss loss 592.0326
+reduce_loss loss 533.8402
+reduce_loss loss 2369.6455
+reduce_loss loss 1605.4502
+reduce_loss loss 537.07605
+reduce_loss loss 403.65637
+reduce_loss loss 502.3576
+reduce_loss loss 2981.1255
+reduce_loss loss 1326.4456
+reduce_loss loss 361.8312
+reduce_loss loss 384.5257
+reduce_loss loss 732.23083
+reduce_loss loss 517.2574
+reduce_loss loss 940.48145
+reduce_loss loss 473.9362
+reduce_loss loss 223.88672
+reduce_loss loss 3226.4111
+reduce_loss loss 1827.151
+reduce_loss loss 655.3803
+reduce_loss loss 982.8458
+reduce_loss loss 1411.4976
+reduce_loss loss 323.12408
+reduce_loss loss 657.8656
+reduce_loss loss 492.25177
+reduce_loss loss 94.17555
+reduce_loss loss 661.9657
+reduce_loss loss 473.9784
+reduce_loss loss 473.50772
+reduce_loss loss 56.403053
+reduce_loss loss 74.86301
+reduce_loss loss 169.23564
+reduce_loss loss 1001.37445
+reduce_loss loss 874.0944
+reduce_loss loss 1458.4954
+reduce_loss loss 152.81403
+reduce_loss loss 684.464
+reduce_loss loss 680.3274
+reduce_loss loss 200.97565
+reduce_loss loss 759.511
+reduce_loss loss 435.87125
+reduce_loss loss 1990.2139
+reduce_loss loss 1181.144
+reduce_loss loss 4623.3667
+reduce_loss loss 1627.0979
+reduce_loss loss 759.40045
+reduce_loss loss 962.28424
+reduce_loss loss 640.9441
+reduce_loss loss 889.4595
+reduce_loss loss 942.47845
+reduce_loss loss 177.43031
+reduce_loss loss 792.0604
+reduce_loss loss 1219.2086
+reduce_loss loss 355.6338
+reduce_loss loss 435.238
+reduce_loss loss 531.23395
+reduce_loss loss 395.17267
+reduce_loss loss 763.508
+reduce_loss loss 612.8898
+reduce_loss loss 1224.0764
+reduce_loss loss 354.6173
+reduce_loss loss 974.0688
+reduce_loss loss 364.5513
+reduce_loss loss 377.92932
+reduce_loss loss 836.3172
+reduce_loss loss 377.62698
+reduce_loss loss 293.13782
+reduce_loss loss 243.89413
+reduce_loss loss 471.81192
+reduce_loss loss 3859.1772
+reduce_loss loss 396.08438
+reduce_loss loss 991.1927
+reduce_loss loss 2333.3271
+reduce_loss loss 1349.81
+reduce_loss loss 481.52948
+reduce_loss loss 512.8893
+reduce_loss loss 1097.9592
+reduce_loss loss 458.77036
+reduce_loss loss 1103.4238
+reduce_loss loss 590.57465
+reduce_loss loss 1303.8328
+reduce_loss loss 295.26584
+reduce_loss loss 673.5263
+reduce_loss loss 3151.958
+reduce_loss loss 2315.8286
+reduce_loss loss 610.1468
+reduce_loss loss 287.89175
+reduce_loss loss 507.51212
+reduce_loss loss 683.39044
+reduce_loss loss 663.9561
+reduce_loss loss 424.58575
+reduce_loss loss 271.09686
+reduce_loss loss 451.36053
+reduce_loss loss 243.66571
+reduce_loss loss 472.99316
+reduce_loss loss 532.1892
+reduce_loss loss 879.29663
+reduce_loss loss 388.00818
+reduce_loss loss 1542.1877
+reduce_loss loss 260.37286
+reduce_loss loss 358.62836
+reduce_loss loss 100.84152
+reduce_loss loss 353.44058
+reduce_loss loss 187.38559
+reduce_loss loss 447.99326
+reduce_loss loss 330.9942
+reduce_loss loss 713.2883
+reduce_loss loss 747.5448
+reduce_loss loss 1131.6227
+reduce_loss loss 1999.3135
+reduce_loss loss 2636.5823
+reduce_loss loss 485.94516
+reduce_loss loss 377.77084
+reduce_loss loss 465.96448
+reduce_loss loss 744.3338
+reduce_loss loss 358.87253
+reduce_loss loss 483.00446
+reduce_loss loss 759.45605
+reduce_loss loss 814.11786
+reduce_loss loss 362.02454
+reduce_loss loss 1313.765
+reduce_loss loss 717.52515
+reduce_loss loss 2124.2427
+reduce_loss loss 627.79016
+reduce_loss loss 282.55215
+reduce_loss loss 877.3819
+reduce_loss loss 426.59952
+reduce_loss loss 1013.68616
+reduce_loss loss 404.79382
+reduce_loss loss 320.791
+reduce_loss loss 330.94986
+reduce_loss loss 919.28955
+reduce_loss loss 474.85358
+reduce_loss loss 891.7077
+reduce_loss loss 636.28644
+reduce_loss loss 710.22046
+reduce_loss loss 243.71413
+reduce_loss loss 594.9394
+reduce_loss loss 1104.3491
+reduce_loss loss 592.0032
+reduce_loss loss 911.7633
+reduce_loss loss 1370.0314
+reduce_loss loss 615.8503
+reduce_loss loss 2889.2146
+reduce_loss loss 1052.5555
+reduce_loss loss 408.85678
+reduce_loss loss 2396.024
+reduce_loss loss 389.80713
+reduce_loss loss 1812.2592
+reduce_loss loss 556.8723
+reduce_loss loss 993.03107
+reduce_loss loss 1273.0997
+reduce_loss loss 1608.237
+reduce_loss loss 1587.5165
+reduce_loss loss 455.4747
+reduce_loss loss 2431.5818
+reduce_loss loss 843.76715
+reduce_loss loss 739.901
+reduce_loss loss 239.5473
+reduce_loss loss 1110.6211
+reduce_loss loss 644.4669
+reduce_loss loss 852.81323
+reduce_loss loss 1216.0399
+reduce_loss loss 609.91187
+reduce_loss loss 346.44348
+reduce_loss loss 494.39578
+reduce_loss loss 130.83894
+reduce_loss loss 2077.657
+reduce_loss loss 350.72098
+reduce_loss loss 1345.0367
+reduce_loss loss 736.39655
+reduce_loss loss 1877.3229
+reduce_loss loss 452.61618
+reduce_loss loss 939.38416
+reduce_loss loss 945.4278
+reduce_loss loss 5609.203
+reduce_loss loss 551.1895
+reduce_loss loss 395.15085
+reduce_loss loss 2443.3467
+reduce_loss loss 392.82062
+reduce_loss loss 678.5541
+reduce_loss loss 396.45
+reduce_loss loss 2039.8182
+reduce_loss loss 1629.841
+reduce_loss loss 1161.8712
+reduce_loss loss 378.34067
+reduce_loss loss 1333.5992
+reduce_loss loss 293.79175
+reduce_loss loss 1130.0973
+reduce_loss loss 522.07855
+reduce_loss loss 692.01385
+reduce_loss loss 1709.1672
+reduce_loss loss 600.2805
+reduce_loss loss 81.51563
+reduce_loss loss 1115.5181
+reduce_loss loss 425.10132
+reduce_loss loss 600.5763
+reduce_loss loss 950.65314
+reduce_loss loss 1320.1415
+reduce_loss loss 651.7585
+reduce_loss loss 1629.8436
+reduce_loss loss 1542.3107
+reduce_loss loss 633.7076
+reduce_loss loss 1591.0812
+reduce_loss loss 394.0359
+reduce_loss loss 426.3504
+reduce_loss loss 1065.2235
+reduce_loss loss 976.7313
+reduce_loss loss 1254.5752
+reduce_loss loss 1274.9742
+reduce_loss loss 934.53186
+reduce_loss loss 649.081
+reduce_loss loss 173.66177
+reduce_loss loss 1120.6136
+reduce_loss loss 1336.6104
+reduce_loss loss 1479.9854
+reduce_loss loss 886.4452
+reduce_loss loss 2794.0137
+reduce_loss loss 1394.8477
+reduce_loss loss 799.37213
+reduce_loss loss 944.6435
+reduce_loss loss 278.72916
+reduce_loss loss 465.93732
+reduce_loss loss 875.7998
+reduce_loss loss 620.25916
+reduce_loss loss 597.35803
+reduce_loss loss 648.1009
+reduce_loss loss 552.74194
+reduce_loss loss 2366.8462
+reduce_loss loss 149.46254
+reduce_loss loss 543.9073
+reduce_loss loss 914.01953
+reduce_loss loss 375.1016
+reduce_loss loss 150.8553
+reduce_loss loss 1104.022
+reduce_loss loss 851.86035
+reduce_loss loss 292.23846
+reduce_loss loss 873.92346
+reduce_loss loss 118.02128
+reduce_loss loss 215.61688
+reduce_loss loss 212.61304
+reduce_loss loss 245.14503
+reduce_loss loss 833.1869
+reduce_loss loss 465.98065
+reduce_loss loss 1442.7439
+reduce_loss loss 757.8263
+reduce_loss loss 492.72354
+reduce_loss loss 2609.5195
+reduce_loss loss 305.3753
+reduce_loss loss 310.63028
+reduce_loss loss 284.96454
+reduce_loss loss 229.0634
+reduce_loss loss 535.4068
+reduce_loss loss 897.9634
+reduce_loss loss 573.4712
+reduce_loss loss 768.7274
+reduce_loss loss 1251.2343
+reduce_loss loss 1172.3431
+reduce_loss loss 491.38358
+reduce_loss loss 391.76025
+reduce_loss loss 1934.4185
+reduce_loss loss 282.4571
+reduce_loss loss 573.47485
+reduce_loss loss 1276.4875
+reduce_loss loss 833.7782
+reduce_loss loss 836.8981
+reduce_loss loss 1068.683
+reduce_loss loss 891.4444
+reduce_loss loss 675.5085
+reduce_loss loss 399.7351
+reduce_loss loss 368.02188
+reduce_loss loss 416.46716
+reduce_loss loss 440.35748
+reduce_loss loss 433.569
+reduce_loss loss 1345.2734
+reduce_loss loss 1780.9459
+reduce_loss loss 336.43866
+reduce_loss loss 174.90845
+reduce_loss loss 624.0195
+reduce_loss loss 509.09195
+reduce_loss loss 668.9747
+reduce_loss loss 809.4248
+reduce_loss loss 313.86163
+reduce_loss loss 254.06929
+reduce_loss loss 242.12262
+reduce_loss loss 288.23798
+reduce_loss loss 1194.1298
+reduce_loss loss 224.18723
+reduce_loss loss 633.2055
+reduce_loss loss 358.34204
+reduce_loss loss 2099.3298
+reduce_loss loss 488.2555
+reduce_loss loss 336.18124
+reduce_loss loss 818.4342
+reduce_loss loss 1290.054
+reduce_loss loss 924.16003
+reduce_loss loss 426.36966
+reduce_loss loss 1677.4858
+reduce_loss loss 1206.4089
+reduce_loss loss 210.95926
+reduce_loss loss 334.43808
+reduce_loss loss 865.89813
+reduce_loss loss 1041.1235
+reduce_loss loss 1120.6721
+reduce_loss loss 1091.1034
+reduce_loss loss 2015.2179
+reduce_loss loss 1084.3488
+reduce_loss loss 2274.2214
+reduce_loss loss 3227.373
+reduce_loss loss 111.077545
+reduce_loss loss 871.58344
+reduce_loss loss 243.87727
+reduce_loss loss 719.90265
+reduce_loss loss 662.88513
+reduce_loss loss 2460.1724
+reduce_loss loss 1843.963
+reduce_loss loss 1428.5992
+reduce_loss loss 861.66675
+reduce_loss loss 403.9395
+reduce_loss loss 1932.1561
+reduce_loss loss 814.8869
+reduce_loss loss 835.19775
+reduce_loss loss 166.56415
+reduce_loss loss 1162.709
+reduce_loss loss 385.5905
+reduce_loss loss 1900.8394
+reduce_loss loss 2895.7412
+reduce_loss loss 3594.512
+reduce_loss loss 2263.9224
+reduce_loss loss 563.062
+reduce_loss loss 630.96844
+reduce_loss loss 455.21793
+reduce_loss loss 874.07623
+reduce_loss loss 1003.5377
+reduce_loss loss 1256.3954
+reduce_loss loss 612.75684
+reduce_loss loss 652.1291
+reduce_loss loss 197.21156
+reduce_loss loss 243.39253
+reduce_loss loss 1432.483
+reduce_loss loss 259.84314
+reduce_loss loss 553.53735
+reduce_loss loss 946.6703
+reduce_loss loss 422.95306
+reduce_loss loss 965.99835
+reduce_loss loss 177.97389
+reduce_loss loss 1068.0121
+reduce_loss loss 1090.9425
+reduce_loss loss 165.39743
+reduce_loss loss 1014.4219
+reduce_loss loss 1142.739
+reduce_loss loss 472.4204
+reduce_loss loss 370.53076
+reduce_loss loss 924.5779
+reduce_loss loss 375.62183
+reduce_loss loss 381.61426
+reduce_loss loss 400.2617
+reduce_loss loss 613.9726
+reduce_loss loss 913.1182
+reduce_loss loss 594.3471
+reduce_loss loss 1178.9237
+reduce_loss loss 585.30835
+reduce_loss loss 1092.35
+reduce_loss loss 612.27673
+reduce_loss loss 564.9743
+reduce_loss loss 428.64053
+reduce_loss loss 1146.1948
+reduce_loss loss 801.8251
+reduce_loss loss 1163.6028
+reduce_loss loss 394.6703
+reduce_loss loss 1146.7174
+reduce_loss loss 1713.8448
+reduce_loss loss 2681.9277
+reduce_loss loss 317.67813
+reduce_loss loss 419.70184
+reduce_loss loss 1167.7424
+reduce_loss loss 2205.1855
+reduce_loss loss 556.5549
+reduce_loss loss 1587.4657
+reduce_loss loss 438.78418
+reduce_loss loss 1610.0059
+reduce_loss loss 641.163
+reduce_loss loss 1207.7917
+reduce_loss loss 1379.1659
+reduce_loss loss 455.33847
+reduce_loss loss 1103.3577
+reduce_loss loss 822.53784
+reduce_loss loss 1253.2511
+reduce_loss loss 990.2157
+reduce_loss loss 969.82526
+reduce_loss loss 1170.83
+reduce_loss loss 206.63857
+reduce_loss loss 945.32935
+reduce_loss loss 219.18575
+reduce_loss loss 1230.4556
+reduce_loss loss 324.42413
+reduce_loss loss 293.49615
+reduce_loss loss 267.83908
+reduce_loss loss 706.47595
+reduce_loss loss 531.08044
+reduce_loss loss 374.36258
+reduce_loss loss 1256.2872
+reduce_loss loss 437.90668
+reduce_loss loss 310.59818
+reduce_loss loss 416.73193
+reduce_loss loss 260.67383
+reduce_loss loss 1024.2241
+reduce_loss loss 484.89294
+reduce_loss loss 563.33105
+reduce_loss loss 300.8086
+reduce_loss loss 222.24408
+reduce_loss loss 539.0993
+reduce_loss loss 269.8885
+reduce_loss loss 721.2668
+reduce_loss loss 2193.4026
+reduce_loss loss 71.226456
+reduce_loss loss 316.76315
+reduce_loss loss 420.1659
+reduce_loss loss 264.6094
+reduce_loss loss 575.3414
+reduce_loss loss 393.78714
+reduce_loss loss 242.3027
+reduce_loss loss 515.2962
+reduce_loss loss 251.55405
+reduce_loss loss 356.14893
+reduce_loss loss 870.89923
+reduce_loss loss 975.65576
+reduce_loss loss 1000.83307
+reduce_loss loss 700.6979
+reduce_loss loss 494.02316
+reduce_loss loss 745.65283
+reduce_loss loss 237.92728
+reduce_loss loss 355.5512
+reduce_loss loss 446.39728
+reduce_loss loss 350.52493
+reduce_loss loss 437.16357
+reduce_loss loss 678.61115
+reduce_loss loss 731.9798
+reduce_loss loss 129.33043
+reduce_loss loss 421.23962
+reduce_loss loss 398.11432
+reduce_loss loss 317.0259
+reduce_loss loss 372.30786
+reduce_loss loss 491.69922
+reduce_loss loss 795.5511
+reduce_loss loss 269.34915
+reduce_loss loss 290.41693
+reduce_loss loss 2335.615
+reduce_loss loss 1707.8514
+reduce_loss loss 664.37646
+reduce_loss loss 935.3698
+reduce_loss loss 678.77484
+reduce_loss loss 180.86331
+reduce_loss loss 1082.0737
+reduce_loss loss 1017.68945
+reduce_loss loss 489.20947
+reduce_loss loss 477.8894
+reduce_loss loss 731.28955
+reduce_loss loss 284.76263
+reduce_loss loss 815.30615
+reduce_loss loss 339.64093
+reduce_loss loss 306.49573
+reduce_loss loss 418.81784
+reduce_loss loss 1641.922
+reduce_loss loss 814.51715
+reduce_loss loss 1597.8766
+reduce_loss loss 352.64963
+reduce_loss loss 285.10037
+reduce_loss loss 463.1809
+reduce_loss loss 617.8854
+reduce_loss loss 1058.828
+reduce_loss loss 472.31766
+reduce_loss loss 1524.8615
+reduce_loss loss 914.3218
+reduce_loss loss 435.8776
+reduce_loss loss 832.1143
+reduce_loss loss 1241.2292
+reduce_loss loss 191.81563
+reduce_loss loss 449.33163
+reduce_loss loss 134.29268
+reduce_loss loss 284.2921
+reduce_loss loss 1470.2056
+reduce_loss loss 1087.3778
+reduce_loss loss 1811.1031
+reduce_loss loss 388.64145
+reduce_loss loss 735.7493
+reduce_loss loss 190.33652
+reduce_loss loss 483.08356
+reduce_loss loss 608.77747
+reduce_loss loss 797.70795
+reduce_loss loss 644.0558
+reduce_loss loss 845.01935
+reduce_loss loss 1186.0858
+reduce_loss loss 959.53656
+reduce_loss loss 398.40738
+reduce_loss loss 1965.9213
+reduce_loss loss 597.1693
+reduce_loss loss 256.39957
+reduce_loss loss 1018.02386
+reduce_loss loss 610.8267
+reduce_loss loss 406.47333
+reduce_loss loss 702.90356
+reduce_loss loss 599.2097
+reduce_loss loss 577.1849
+reduce_loss loss 1051.803
+reduce_loss loss 960.8201
+reduce_loss loss 640.4611
+reduce_loss loss 1146.8488
+reduce_loss loss 630.7633
+reduce_loss loss 594.8026
+reduce_loss loss 265.75018
+reduce_loss loss 415.35934
+reduce_loss loss 232.666
+reduce_loss loss 276.37598
+reduce_loss loss 1693.5206
+reduce_loss loss 911.0527
+reduce_loss loss 527.1019
+reduce_loss loss 338.93674
+reduce_loss loss 322.60428
+reduce_loss loss 114.12455
+reduce_loss loss 768.9136
+reduce_loss loss 382.0316
+reduce_loss loss 523.59467
+reduce_loss loss 400.66382
+reduce_loss loss 604.85785
+reduce_loss loss 708.68274
+reduce_loss loss 97.66398
+reduce_loss loss 185.98773
+reduce_loss loss 1200.1433
+reduce_loss loss 508.02008
+reduce_loss loss 603.1019
+reduce_loss loss 755.6895
+reduce_loss loss 756.01575
+reduce_loss loss 624.7047
+reduce_loss loss 548.24274
+reduce_loss loss 606.12897
+reduce_loss loss 1107.791
+reduce_loss loss 608.5462
+reduce_loss loss 186.72508
+reduce_loss loss 214.57726
+reduce_loss loss 468.01837
+reduce_loss loss 247.59698
+reduce_loss loss 1615.6534
+reduce_loss loss 179.91425
+reduce_loss loss 1827.3939
+reduce_loss loss 584.65173
+reduce_loss loss 408.30698
+reduce_loss loss 316.52563
+reduce_loss loss 269.30914
+reduce_loss loss 311.52484
+reduce_loss loss 801.3837
+reduce_loss loss 1615.8749
+reduce_loss loss 767.5779
+reduce_loss loss 1066.4443
+reduce_loss loss 599.12286
+reduce_loss loss 523.22174
+reduce_loss loss 154.16452
+reduce_loss loss 1824.1464
+reduce_loss loss 736.83356
+reduce_loss loss 560.8993
+reduce_loss loss 529.5216
+reduce_loss loss 330.00687
+reduce_loss loss 1042.5494
+reduce_loss loss 558.52655
+reduce_loss loss 529.54376
+reduce_loss loss 936.71545
+reduce_loss loss 1271.0135
+reduce_loss loss 192.6523
+reduce_loss loss 772.79755
+reduce_loss loss 973.1741
+reduce_loss loss 1198.6036
+reduce_loss loss 843.81274
+reduce_loss loss 1031.3978
+reduce_loss loss 1923.0712
+reduce_loss loss 550.0861
+reduce_loss loss 287.89468
+reduce_loss loss 777.5967
+reduce_loss loss 830.6681
+reduce_loss loss 248.68031
+reduce_loss loss 303.3307
+reduce_loss loss 469.11206
+reduce_loss loss 492.13773
+reduce_loss loss 886.62836
+reduce_loss loss 1296.4113
+reduce_loss loss 1721.3069
+reduce_loss loss 1860.579
+reduce_loss loss 696.8921
+reduce_loss loss 469.30804
+reduce_loss loss 615.2981
+reduce_loss loss 392.89365
+reduce_loss loss 777.12427
+reduce_loss loss 684.43585
+reduce_loss loss 1414.9988
+reduce_loss loss 4947.656
+reduce_loss loss 771.9379
+reduce_loss loss 999.36707
+reduce_loss loss 943.5708
+reduce_loss loss 2352.6116
+reduce_loss loss 927.59015
+reduce_loss loss 296.2623
+reduce_loss loss 310.73483
+reduce_loss loss 725.1007
+reduce_loss loss 379.36285
+reduce_loss loss 2379.2888
+reduce_loss loss 109.79025
+reduce_loss loss 2352.1511
+reduce_loss loss 777.08936
+reduce_loss loss 252.11256
+reduce_loss loss 925.19257
+reduce_loss loss 136.68282
+reduce_loss loss 496.42126
+reduce_loss loss 959.43243
+reduce_loss loss 465.53235
+reduce_loss loss 480.65747
+reduce_loss loss 1795.6749
+reduce_loss loss 1322.1095
+reduce_loss loss 148.91064
+reduce_loss loss 398.81226
+reduce_loss loss 519.8668
+reduce_loss loss 1134.4004
+reduce_loss loss 439.98685
+reduce_loss loss 1091.1432
+reduce_loss loss 191.33954
+reduce_loss loss 288.25168
+reduce_loss loss 685.5508
+reduce_loss loss 161.31903
+reduce_loss loss 506.32465
+reduce_loss loss 381.02332
+reduce_loss loss 1529.3077
+reduce_loss loss 629.63666
+reduce_loss loss 436.9186
+reduce_loss loss 369.7407
+reduce_loss loss 481.33975
+reduce_loss loss 744.2513
+reduce_loss loss 293.12198
+reduce_loss loss 104.59939
+reduce_loss loss 3122.9731
+reduce_loss loss 281.59637
+reduce_loss loss 142.90321
+reduce_loss loss 423.55222
+reduce_loss loss 395.6619
+reduce_loss loss 70.70202
+reduce_loss loss 1576.9163
+reduce_loss loss 5723.1367
+reduce_loss loss 1011.64343
+reduce_loss loss 151.6497
+reduce_loss loss 207.59393
+reduce_loss loss 413.13928
+reduce_loss loss 366.07132
+reduce_loss loss 1110.8575
+reduce_loss loss 2512.829
+reduce_loss loss 932.2858
+reduce_loss loss 1604.7522
+reduce_loss loss 2008.2875
+reduce_loss loss 354.04935
+reduce_loss loss 367.52875
+reduce_loss loss 666.9331
+reduce_loss loss 1071.3584
+reduce_loss loss 393.46
+reduce_loss loss 551.4994
+reduce_loss loss 422.65594
+reduce_loss loss 2492.227
+reduce_loss loss 236.50839
+reduce_loss loss 883.8663
+reduce_loss loss 273.49445
+reduce_loss loss 166.43091
+reduce_loss loss 1418.3448
+reduce_loss loss 367.18246
+reduce_loss loss 236.9355
+reduce_loss loss 226.10532
+reduce_loss loss 1513.5889
+reduce_loss loss 505.36862
+reduce_loss loss 1240.2202
+reduce_loss loss 131.22081
+reduce_loss loss 614.89545
+reduce_loss loss 6414.0273
+reduce_loss loss 908.9692
+reduce_loss loss 954.903
+reduce_loss loss 1173.9178
+reduce_loss loss 1590.6838
+reduce_loss loss 369.1374
+reduce_loss loss 407.78418
+reduce_loss loss 1806.8923
+reduce_loss loss 389.68362
+reduce_loss loss 947.7004
+reduce_loss loss 182.9665
+reduce_loss loss 1072.8176
+reduce_loss loss 507.9568
+reduce_loss loss 306.85934
+reduce_loss loss 478.66196
+reduce_loss loss 1021.42224
+reduce_loss loss 1825.753
+reduce_loss loss 311.11093
+reduce_loss loss 331.6971
+reduce_loss loss 779.0006
+reduce_loss loss 130.25697
+reduce_loss loss 280.68582
+reduce_loss loss 664.84784
+reduce_loss loss 337.01154
+reduce_loss loss 504.61444
+reduce_loss loss 876.4109
+reduce_loss loss 655.91425
+reduce_loss loss 825.5161
+reduce_loss loss 613.22
+reduce_loss loss 400.79858
+reduce_loss loss 1175.8195
+reduce_loss loss 656.7534
+reduce_loss loss 306.6627
+reduce_loss loss 207.26845
+reduce_loss loss 611.7155
+reduce_loss loss 554.4891
+reduce_loss loss 115.14323
+reduce_loss loss 506.3249
+reduce_loss loss 296.25604
+reduce_loss loss 557.0194
+reduce_loss loss 261.83963
+reduce_loss loss 1180.0878
+reduce_loss loss 623.5244
+reduce_loss loss 649.2395
+reduce_loss loss 1461.4387
+reduce_loss loss 1806.9329
+reduce_loss loss 266.38992
+reduce_loss loss 3371.537
+reduce_loss loss 454.46637
+reduce_loss loss 584.7765
+reduce_loss loss 356.3537
+reduce_loss loss 368.72244
+reduce_loss loss 1295.0876
+reduce_loss loss 302.13248
+reduce_loss loss 126.36274
+reduce_loss loss 775.5281
+reduce_loss loss 164.91138
+reduce_loss loss 611.0743
+reduce_loss loss 257.72903
+reduce_loss loss 450.2268
+reduce_loss loss 1037.4058
+reduce_loss loss 1376.7714
+reduce_loss loss 496.79962
+reduce_loss loss 164.41718
+reduce_loss loss 379.7401
+reduce_loss loss 273.75885
+reduce_loss loss 903.6488
+reduce_loss loss 611.9384
+reduce_loss loss 833.2496
+reduce_loss loss 1217.8147
+reduce_loss loss 523.26306
+reduce_loss loss 310.43454
+reduce_loss loss 1605.4841
+reduce_loss loss 764.8938
+reduce_loss loss 309.8677
+reduce_loss loss 778.7128
+reduce_loss loss 300.82388
+reduce_loss loss 493.29257
+reduce_loss loss 444.91068
+reduce_loss loss 474.4016
+reduce_loss loss 148.40558
+reduce_loss loss 3239.7646
+reduce_loss loss 930.32654
+reduce_loss loss 811.2507
+reduce_loss loss 210.39168
+reduce_loss loss 1270.1533
+reduce_loss loss 206.50607
+reduce_loss loss 409.0756
+reduce_loss loss 1121.8373
+reduce_loss loss 1782.4666
+reduce_loss loss 1124.1333
+reduce_loss loss 527.05695
+reduce_loss loss 776.2927
+reduce_loss loss 1075.6339
+reduce_loss loss 1102.9891
+reduce_loss loss 1969.5457
+reduce_loss loss 864.5498
+reduce_loss loss 849.95605
+reduce_loss loss 1585.9558
+reduce_loss loss 1574.2202
+reduce_loss loss 662.09174
+reduce_loss loss 378.28564
+reduce_loss loss 1510.8119
+reduce_loss loss 221.572
+reduce_loss loss 964.96704
+reduce_loss loss 383.02713
+reduce_loss loss 1043.3174
+reduce_loss loss 457.92816
+reduce_loss loss 2566.2239
+reduce_loss loss 1601.0037
+reduce_loss loss 467.19916
+reduce_loss loss 794.7892
+reduce_loss loss 730.7819
+reduce_loss loss 1443.6416
+reduce_loss loss 1511.1036
+reduce_loss loss 586.30634
+reduce_loss loss 3672.942
+reduce_loss loss 1063.2292
+reduce_loss loss 639.52936
+reduce_loss loss 698.8816
+reduce_loss loss 494.7083
+reduce_loss loss 989.16705
+reduce_loss loss 779.2114
+reduce_loss loss 861.7807
+reduce_loss loss 847.786
+reduce_loss loss 719.58185
+reduce_loss loss 389.5791
+reduce_loss loss 493.4237
+reduce_loss loss 617.26056
+reduce_loss loss 161.6119
+reduce_loss loss 2080.9885
+reduce_loss loss 306.38284
+reduce_loss loss 739.9234
+reduce_loss loss 798.98566
+reduce_loss loss 779.07153
+reduce_loss loss 889.4895
+reduce_loss loss 301.3491
+reduce_loss loss 615.0993
+reduce_loss loss 525.533
+reduce_loss loss 553.48065
+reduce_loss loss 103.88896
+reduce_loss loss 783.6498
+reduce_loss loss 814.11707
+reduce_loss loss 896.1183
+reduce_loss loss 508.37036
+reduce_loss loss 1212.8661
+reduce_loss loss 561.6344
+reduce_loss loss 325.4576
+reduce_loss loss 279.6846
+reduce_loss loss 400.98837
+reduce_loss loss 297.0706
+reduce_loss loss 415.942
+reduce_loss loss 780.39954
+reduce_loss loss 979.07825
+reduce_loss loss 454.96738
+reduce_loss loss 234.34764
+reduce_loss loss 643.4803
+reduce_loss loss 1179.9961
+reduce_loss loss 992.51013
+reduce_loss loss 1526.2096
+reduce_loss loss 518.04285
+reduce_loss loss 371.71136
+reduce_loss loss 209.57788
+reduce_loss loss 525.5278
+reduce_loss loss 637.73596
+reduce_loss loss 252.28079
+reduce_loss loss 743.0599
+reduce_loss loss 210.27362
+reduce_loss loss 433.10104
+reduce_loss loss 1496.5931
+reduce_loss loss 967.9173
+reduce_loss loss 410.09763
+reduce_loss loss 1022.48816
+reduce_loss loss 525.1126
+reduce_loss loss 1127.2349
+reduce_loss loss 597.844
+reduce_loss loss 546.68207
+reduce_loss loss 404.69458
+reduce_loss loss 1021.51447
+reduce_loss loss 1101.2673
+reduce_loss loss 169.4047
+reduce_loss loss 360.26163
+reduce_loss loss 419.37024
+reduce_loss loss 757.09125
+reduce_loss loss 1036.2106
+reduce_loss loss 268.22626
+reduce_loss loss 377.79877
+reduce_loss loss 278.30096
+reduce_loss loss 209.6709
+reduce_loss loss 658.2963
+reduce_loss loss 309.7714
+reduce_loss loss 396.52603
+reduce_loss loss 350.2703
+reduce_loss loss 853.0267
+reduce_loss loss 95.9864
+reduce_loss loss 230.16818
+reduce_loss loss 580.36707
+reduce_loss loss 717.50104
+reduce_loss loss 396.34412
+reduce_loss loss 973.3972
+reduce_loss loss 1195.3844
+reduce_loss loss 575.2585
+reduce_loss loss 1483.7413
+reduce_loss loss 489.51868
+reduce_loss loss 239.19867
+reduce_loss loss 502.48825
+reduce_loss loss 176.84366
+reduce_loss loss 167.74393
+reduce_loss loss 260.13464
+reduce_loss loss 120.06367
+reduce_loss loss 253.652
+reduce_loss loss 268.9208
+reduce_loss loss 96.19192
+reduce_loss loss 281.53995
+reduce_loss loss 471.29605
+reduce_loss loss 2618.766
+reduce_loss loss 717.7109
+reduce_loss loss 254.8516
+reduce_loss loss 183.57118
+reduce_loss loss 997.5256
+reduce_loss loss 88.87378
+reduce_loss loss 880.43494
+reduce_loss loss 863.2579
+reduce_loss loss 570.3727
+reduce_loss loss 1865.0063
+reduce_loss loss 1061.3212
+reduce_loss loss 415.9258
+reduce_loss loss 570.8192
+reduce_loss loss 1018.0629
+reduce_loss loss 116.40182
+reduce_loss loss 970.07434
+reduce_loss loss 1452.1726
+reduce_loss loss 373.28418
+reduce_loss loss 335.8581
+reduce_loss loss 848.8508
+reduce_loss loss 281.62555
+reduce_loss loss 714.9533
+reduce_loss loss 18.815998
+reduce_loss loss 482.44894
+reduce_loss loss 687.2189
+reduce_loss loss 487.4398
+reduce_loss loss 808.02576
+reduce_loss loss 794.0255
+reduce_loss loss 281.43564
+reduce_loss loss 216.01024
+reduce_loss loss 927.1522
+reduce_loss loss 615.6862
+reduce_loss loss 2070.1707
+reduce_loss loss 188.27745
+reduce_loss loss 1165.3071
+reduce_loss loss 238.57753
+reduce_loss loss 365.86142
+reduce_loss loss 782.5615
+reduce_loss loss 259.5185
+reduce_loss loss 1276.9425
+reduce_loss loss 497.93784
+reduce_loss loss 595.9277
+reduce_loss loss 289.61124
+reduce_loss loss 429.9092
+reduce_loss loss 277.12357
+reduce_loss loss 223.27231
+reduce_loss loss 750.1057
+reduce_loss loss 1687.9501
+reduce_loss loss 683.5028
+reduce_loss loss 386.23987
+reduce_loss loss 352.13834
+reduce_loss loss 356.1959
+reduce_loss loss 744.27295
+reduce_loss loss 129.97562
+reduce_loss loss 698.59204
+reduce_loss loss 1149.0099
+reduce_loss loss 675.19415
+reduce_loss loss 275.27087
+reduce_loss loss 1244.6897
+reduce_loss loss 530.1295
+reduce_loss loss 328.58197
+reduce_loss loss 1059.0854
+reduce_loss loss 1454.9982
+reduce_loss loss 170.18279
+reduce_loss loss 348.73975
+reduce_loss loss 1849.5841
+reduce_loss loss 1345.0745
+reduce_loss loss 641.7106
+reduce_loss loss 1586.172
+reduce_loss loss 789.0241
+reduce_loss loss 462.5342
+reduce_loss loss 721.17633
+reduce_loss loss 677.73145
+reduce_loss loss 938.5722
+reduce_loss loss 1473.1753
+reduce_loss loss 1659.4889
+reduce_loss loss 401.63162
+reduce_loss loss 487.28317
+reduce_loss loss 1534.7139
+reduce_loss loss 1257.1437
+reduce_loss loss 749.5585
+reduce_loss loss 401.04102
+reduce_loss loss 563.35974
+reduce_loss loss 387.78604
+reduce_loss loss 610.49963
+reduce_loss loss 385.16074
+reduce_loss loss 770.54736
+reduce_loss loss 272.28287
+reduce_loss loss 649.9473
+reduce_loss loss 704.8421
+reduce_loss loss 449.62302
+reduce_loss loss 235.61504
+reduce_loss loss 881.04614
+reduce_loss loss 1223.4191
+reduce_loss loss 276.09406
+reduce_loss loss 656.4518
+reduce_loss loss 738.15704
+reduce_loss loss 657.58575
+reduce_loss loss 495.87323
+reduce_loss loss 184.94096
+reduce_loss loss 542.0624
+reduce_loss loss 308.3736
+reduce_loss loss 2011.5942
+reduce_loss loss 438.0355
+reduce_loss loss 790.19086
+reduce_loss loss 1061.9924
+reduce_loss loss 1071.3048
+reduce_loss loss 352.2592
+reduce_loss loss 1436.7284
+reduce_loss loss 488.56635
+reduce_loss loss 1458.5485
+reduce_loss loss 210.55182
+reduce_loss loss 409.46127
+reduce_loss loss 319.67728
+reduce_loss loss 234.95479
+reduce_loss loss 1073.4878
+reduce_loss loss 1333.3215
+reduce_loss loss 1281.1134
+reduce_loss loss 1415.7635
+reduce_loss loss 513.4916
+reduce_loss loss 1463.2155
+reduce_loss loss 797.75604
+reduce_loss loss 576.51086
+reduce_loss loss 102.79468
+reduce_loss loss 562.9713
+reduce_loss loss 1058.0829
+reduce_loss loss 309.9467
+reduce_loss loss 1293.977
+reduce_loss loss 220.59286
+reduce_loss loss 479.06915
+reduce_loss loss 783.0969
+reduce_loss loss 47.13434
+reduce_loss loss 381.46454
+reduce_loss loss 688.88336
+reduce_loss loss 717.53265
+reduce_loss loss 741.4956
+reduce_loss loss 954.79156
+reduce_loss loss 2916.3555
+reduce_loss loss 246.46574
+reduce_loss loss 112.510086
+reduce_loss loss 533.02094
+reduce_loss loss 407.89322
+reduce_loss loss 992.0077
+reduce_loss loss 519.15814
+reduce_loss loss 1463.5846
+reduce_loss loss 525.825
+reduce_loss loss 264.52545
+reduce_loss loss 223.61166
+reduce_loss loss 1070.8485
+reduce_loss loss 713.46594
+reduce_loss loss 493.70715
+reduce_loss loss 298.04266
+reduce_loss loss 827.1597
+reduce_loss loss 394.66855
+reduce_loss loss 991.879
+reduce_loss loss 1444.2391
+reduce_loss loss 1413.957
+reduce_loss loss 267.52466
+reduce_loss loss 633.8805
+reduce_loss loss 1348.9993
+reduce_loss loss 1579.1661
+reduce_loss loss 282.9768
+reduce_loss loss 430.09732
+reduce_loss loss 736.8747
+reduce_loss loss 991.1685
+reduce_loss loss 562.50574
+reduce_loss loss 636.31635
+reduce_loss loss 239.48892
+reduce_loss loss 812.9861
+reduce_loss loss 755.2231
+reduce_loss loss 719.4553
+reduce_loss loss 739.95233
+reduce_loss loss 2116.8262
+reduce_loss loss 664.3056
+reduce_loss loss 1793.931
+reduce_loss loss 1396.8914
+reduce_loss loss 1172.8844
+reduce_loss loss 466.35504
+reduce_loss loss 924.4149
+reduce_loss loss 475.1977
+reduce_loss loss 628.15643
+reduce_loss loss 848.79803
+reduce_loss loss 641.15955
+reduce_loss loss 701.597
+reduce_loss loss 969.9349
+reduce_loss loss 458.66898
+reduce_loss loss 294.11044
+reduce_loss loss 311.16754
+reduce_loss loss 925.7262
+reduce_loss loss 193.44661
+reduce_loss loss 792.5598
+reduce_loss loss 281.6317
+reduce_loss loss 126.75771
+reduce_loss loss 320.8351
+reduce_loss loss 202.91234
+reduce_loss loss 663.6292
+reduce_loss loss 1505.3301
+reduce_loss loss 300.96457
+reduce_loss loss 429.53485
+reduce_loss loss 157.32562
+reduce_loss loss 342.06384
+reduce_loss loss 1595.6299
+reduce_loss loss 269.09424
+reduce_loss loss 159.95802
+reduce_loss loss 262.3022
+reduce_loss loss 825.06
+reduce_loss loss 1523.8782
+reduce_loss loss 1930.5197
+reduce_loss loss 72.356064
+reduce_loss loss 326.5995
+reduce_loss loss 82.99151
+reduce_loss loss 1004.6283
+reduce_loss loss 2181.5671
+reduce_loss loss 898.1647
+reduce_loss loss 675.6799
+reduce_loss loss 299.21576
+reduce_loss loss 69.59593
+reduce_loss loss 1838.3821
+reduce_loss loss 1246.1965
+reduce_loss loss 531.95734
+reduce_loss loss 1480.6755
+reduce_loss loss 384.66083
+reduce_loss loss 721.9405
+reduce_loss loss 2296.5354
+reduce_loss loss 1684.1428
+reduce_loss loss 372.41006
+reduce_loss loss 262.7999
+reduce_loss loss 989.9067
+reduce_loss loss 227.17487
+reduce_loss loss 412.18323
+reduce_loss loss 757.35767
+reduce_loss loss 293.23666
+reduce_loss loss 2120.614
+reduce_loss loss 802.6941
+reduce_loss loss 659.7631
+reduce_loss loss 1164.2438
+reduce_loss loss 383.36282
+reduce_loss loss 1097.4492
+reduce_loss loss 1564.8713
+reduce_loss loss 794.6186
+reduce_loss loss 274.8083
+reduce_loss loss 389.37454
+reduce_loss loss 350.26743
+reduce_loss loss 1436.3372
+reduce_loss loss 189.51198
+reduce_loss loss 169.4465
+reduce_loss loss 180.3905
+reduce_loss loss 260.4171
+reduce_loss loss 297.9617
+reduce_loss loss 399.66965
+reduce_loss loss 2885.1597
+reduce_loss loss 2487.3022
+reduce_loss loss 730.7242
+reduce_loss loss 1029.0844
+reduce_loss loss 111.56304
+reduce_loss loss 728.48444
+reduce_loss loss 779.80945
+reduce_loss loss 546.56464
+reduce_loss loss 698.562
+reduce_loss loss 592.8726
+reduce_loss loss 1136.433
+reduce_loss loss 972.64935
+reduce_loss loss 148.26205
+reduce_loss loss 2215.7646
+reduce_loss loss 267.35312
+reduce_loss loss 788.4659
+reduce_loss loss 353.44025
+reduce_loss loss 446.58768
+reduce_loss loss 147.56778
+reduce_loss loss 400.31052
+reduce_loss loss 537.8492
+reduce_loss loss 530.56464
+reduce_loss loss 232.50471
+reduce_loss loss 933.0811
+reduce_loss loss 737.32416
+reduce_loss loss 413.51758
+reduce_loss loss 411.59338
+reduce_loss loss 293.58463
+reduce_loss loss 1140.9688
+reduce_loss loss 684.9245
+reduce_loss loss 455.1852
+reduce_loss loss 2297.748
+reduce_loss loss 512.5377
+reduce_loss loss 809.24243
+reduce_loss loss 2002.2522
+reduce_loss loss 496.16382
+reduce_loss loss 152.90681
+reduce_loss loss 219.17722
+reduce_loss loss 732.15314
+reduce_loss loss 685.48193
+reduce_loss loss 134.94846
+reduce_loss loss 589.97797
+reduce_loss loss 1066.8942
+reduce_loss loss 708.9071
+reduce_loss loss 363.46072
+reduce_loss loss 518.86707
+reduce_loss loss 951.1161
+reduce_loss loss 431.57886
+reduce_loss loss 608.31757
+reduce_loss loss 204.7765
+reduce_loss loss 383.91183
+reduce_loss loss 209.63998
+reduce_loss loss 801.6048
+reduce_loss loss 682.1928
+reduce_loss loss 508.79474
+reduce_loss loss 490.74
+reduce_loss loss 369.69464
+reduce_loss loss 812.4022
+reduce_loss loss 544.0694
+reduce_loss loss 267.3501
+reduce_loss loss 209.71965
+reduce_loss loss 344.90244
+reduce_loss loss 798.7931
+reduce_loss loss 582.05743
+reduce_loss loss 490.1147
+reduce_loss loss 4627.3613
+reduce_loss loss 822.13794
+reduce_loss loss 320.40836
+reduce_loss loss 939.18256
+reduce_loss loss 1244.0175
+reduce_loss loss 775.128
+reduce_loss loss 108.28063
+reduce_loss loss 770.50464
+reduce_loss loss 817.38367
+reduce_loss loss 2480.8184
+reduce_loss loss 412.59033
+reduce_loss loss 439.0194
+reduce_loss loss 543.76294
+reduce_loss loss 799.186
+reduce_loss loss 1762.3947
+reduce_loss loss 357.05368
+reduce_loss loss 1245.2792
+reduce_loss loss 406.45813
+reduce_loss loss 462.60236
+reduce_loss loss 351.9738
+reduce_loss loss 597.92175
+reduce_loss loss 541.009
+reduce_loss loss 788.54895
+reduce_loss loss 495.79156
+reduce_loss loss 570.84125
+reduce_loss loss 267.60928
+reduce_loss loss 617.20746
+reduce_loss loss 323.81934
+reduce_loss loss 254.29913
+reduce_loss loss 484.00162
+reduce_loss loss 299.924
+reduce_loss loss 337.80655
+reduce_loss loss 1187.4838
+reduce_loss loss 670.6739
+reduce_loss loss 4918.4746
+reduce_loss loss 589.30023
+reduce_loss loss 221.11693
+reduce_loss loss 634.26086
+reduce_loss loss 835.32404
+reduce_loss loss 643.58575
+reduce_loss loss 339.9904
+reduce_loss loss 538.6311
+reduce_loss loss 119.5241
+reduce_loss loss 957.84393
+reduce_loss loss 697.67206
+reduce_loss loss 312.20645
+reduce_loss loss 498.18845
+reduce_loss loss 690.28674
+reduce_loss loss 537.68567
+reduce_loss loss 149.93721
+reduce_loss loss 68.718925
+reduce_loss loss 246.82509
+reduce_loss loss 555.50525
+reduce_loss loss 924.1923
+reduce_loss loss 711.2488
+reduce_loss loss 255.01862
+reduce_loss loss 72.60994
+reduce_loss loss 1281.046
+reduce_loss loss 715.89197
+reduce_loss loss 758.88184
+reduce_loss loss 918.79926
+reduce_loss loss 1002.80365
+reduce_loss loss 2155.3853
+reduce_loss loss 159.85052
+reduce_loss loss 765.17004
+reduce_loss loss 947.4824
+reduce_loss loss 831.46387
+reduce_loss loss 869.55304
+reduce_loss loss 429.7613
+reduce_loss loss 747.8317
+reduce_loss loss 719.9579
+reduce_loss loss 103.00955
+reduce_loss loss 677.8989
+reduce_loss loss 691.55426
+reduce_loss loss 392.40396
+reduce_loss loss 386.32037
+reduce_loss loss 232.04912
+reduce_loss loss 920.7168
+reduce_loss loss 174.268
+reduce_loss loss 774.7694
+reduce_loss loss 325.74722
+reduce_loss loss 504.28546
+reduce_loss loss 593.8474
+reduce_loss loss 206.49263
+reduce_loss loss 207.39883
+reduce_loss loss 483.38116
+reduce_loss loss 432.97635
+reduce_loss loss 219.29753
+reduce_loss loss 310.1197
+reduce_loss loss 1072.0587
+reduce_loss loss 369.06586
+reduce_loss loss 321.08563
+reduce_loss loss 596.85034
+reduce_loss loss 341.71243
+reduce_loss loss 270.09177
+reduce_loss loss 221.64792
+reduce_loss loss 627.4612
+reduce_loss loss 433.86804
+reduce_loss loss 265.61304
+reduce_loss loss 288.51953
+reduce_loss loss 1116.0427
+reduce_loss loss 682.1451
+reduce_loss loss 487.325
+reduce_loss loss 657.8304
+reduce_loss loss 597.22
+reduce_loss loss 718.8649
+reduce_loss loss 1071.9117
+reduce_loss loss 2243.5178
+reduce_loss loss 1357.3242
+reduce_loss loss 838.5796
+reduce_loss loss 694.1133
+reduce_loss loss 323.04492
+reduce_loss loss 210.50517
+reduce_loss loss 301.75305
+reduce_loss loss 1288.7145
+reduce_loss loss 335.7276
+reduce_loss loss 484.586
+reduce_loss loss 544.6172
+reduce_loss loss 682.75354
+reduce_loss loss 50.857918
+reduce_loss loss 1809.3531
+reduce_loss loss 1206.8207
+reduce_loss loss 1111.1262
+reduce_loss loss 994.1853
+reduce_loss loss 334.07053
+reduce_loss loss 209.20851
+reduce_loss loss 276.22818
+reduce_loss loss 156.01003
+reduce_loss loss 494.56287
+reduce_loss loss 290.1075
+reduce_loss loss 68.20329
+reduce_loss loss 1218.2856
+reduce_loss loss 374.19406
+reduce_loss loss 564.7643
+reduce_loss loss 437.44565
+reduce_loss loss 529.84
+1326/1326 - 960s - loss: 909.4936 - reduce_loss_loss: 152.9068 - val_loss: 651.6006 - val_reduce_loss_loss: 529.8400

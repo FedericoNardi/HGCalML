@@ -1,0 +1,3 @@
+List kength:  22
+UNIQUE IDX:  KerasTensor(type_spec=TensorSpec(shape=(None, 1), dtype=tf.int32, name='9'), name='9', description="created by layer '9'")
+signal_score_regressor returning zero loss Tensor("signal_score_regressor/SelectV2:0", shape=(), dtype=float32)

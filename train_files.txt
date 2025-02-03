@@ -1,0 +1,9 @@
+/media/disk/mucoll_tuples/unif/cut/photons_cut_4.root
+/media/disk/mucoll_tuples/unif/cut/photons_cut_8.root
+/media/disk/mucoll_tuples/unif/cut/photons_cut_7.root
+/media/disk/mucoll_tuples/unif/cut/photons_cut_9.root
+/media/disk/mucoll_tuples/unif/cut/photons_cut_3.root
+/media/disk/mucoll_tuples/unif/cut/photons_cut_2.root
+/media/disk/mucoll_tuples/unif/cut/photons_cut_1.root
+/media/disk/mucoll_tuples/unif/cut/photons_cut_6.root
+/media/disk/mucoll_tuples/unif/cut/photons_cut_5.root
