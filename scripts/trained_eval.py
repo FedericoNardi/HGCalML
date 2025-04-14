@@ -394,6 +394,3 @@ keras_model.trainable = False
 # Evaluate the model on a set of generated showers
 inputs = get_feature_list(100, isTraining=False)
 print(keras_model(inputs))
-
-
-

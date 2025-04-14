@@ -158,3 +158,106 @@ class Shower:
         plt.title('c(z)')
         plt.savefig('img/parameters.png')
         plt.close()
+
+
+
+class GravNetLayer(tf.keras.layers.Layer):
+    def __init__(self, feature_dim, k=10):
+        super().__init__()
+        self.feature_dim = feature_dim
+        self.k = k
+        self.mlp = tf.keras.Sequential([
+            tf.keras.layers.Dense(32, activation='relu'),
+            tf.keras.layers.Dense(self.feature_dim)
+        ])
+    
+    def call(self, inputs):
+
+        # Assume inputs: (B, N, F), split positions and features
+        positions, features = inputs[..., :2], inputs[..., 2:]
+    
+        # Compute pairwise distances (B, N, N)
+        dists = tf.norm(
+            tf.expand_dims(positions, 2) - tf.expand_dims(positions, 1),
+            axis=-1
+        )
+
+        # Compute k-NN indices (B, N, k)
+        knn_indices = tf.argsort(dists, axis=-1)[..., 1:self.k+1]
+    
+        # Gather neighbor features (B, N, k, F)
+        neighbor_features = tf.gather(features, knn_indices, batch_dims=1)
+    
+        # Aggregate: (B, N, F)
+        aggregated_features = tf.reduce_mean(neighbor_features, axis=-2)
+    
+        # MLP: (B, N, F')
+        updated_features = self.mlp(aggregated_features)
+    
+        return tf.concat([positions, updated_features], axis=-1)
+
+    def bak_call(self, inputs):
+        positions, features = inputs[..., :2], inputs[..., 2:]
+        # Compute distance matrix
+        dists = tf.norm(tf.expand_dims(positions, 2) - tf.expand_dims(positions, 1), axis=-1)
+        # Find k nearest neighbors
+        knn_indices = tf.argsort(dists, axis=-1)[..., 1:self.k+1]
+        
+        # Aggregate features from neighbors
+        neighbor_features = tf.gather(features, knn_indices, batch_dims=1)
+        aggregated_features = tf.reduce_mean(neighbor_features, axis=-2)
+        
+        # Transform features
+        updated_features = self.mlp(aggregated_features)
+        return tf.concat([positions, updated_features], axis=-1)
+
+class GravNetBlock():
+    '''
+    A block of [GravNet, MessagePassing, BatchNormalization, Dense(128), BatchNormalization, Dense(96), GlobalExchange, Dense(96), BatchNormalization] layers
+    '''
+    def __init__(self, feature_dim, k=8):
+        self.gravnet = GravNetLayer(feature_dim, k)
+        self.bn1 = tf.keras.layers.BatchNormalization()
+        self.dense1 = tf.keras.layers.Dense(64, activation='relu')
+        self.bn2 = tf.keras.layers.BatchNormalization()
+        self.dense2 = tf.keras.layers.Dense(64, activation='relu')
+        self.dense3 = tf.keras.layers.Dense(64, activation='relu')
+        self.bn3 = tf.keras.layers.BatchNormalization()
+    def __call__(self, x):
+        x = self.gravnet(x)
+        x = self.bn1(x)
+        x = self.dense1(x)
+        x = self.bn2(x)
+        x = self.dense2(x)
+        global_feat = tf.reduce_mean(x, axis=1, keepdims=True)  # shape: (B, 1, F)
+        x = tf.concat([x, tf.tile(global_feat, [1, tf.shape(x)[1], 1])], axis=-1)  # shape: (B, N, 2F)
+        x = self.dense3(x)
+        x = self.bn3(x)
+        return x
+    
+# Build the GNN Model
+class ShowerGNN(tf.keras.Model):
+    def __init__(self):
+        super(ShowerGNN, self).__init__()
+        
+        self.batch_norm = tf.keras.layers.BatchNormalization()
+        self.gravnet1 = GravNetLayer(32, k=8)
+        self.gravnet2 = GravNetLayer(32, k=8)
+        self.dense1 = tf.keras.layers.Dense(128, activation='relu')
+        self.dense2 = tf.keras.layers.Dense(64, activation='relu')
+        self.dense3 = tf.keras.layers.Dense(32, activation='relu')
+        self.batch_norm2 = tf.keras.layers.BatchNormalization()
+        self.output_layer = tf.keras.layers.Dense(1)
+        
+    def call(self, inputs, training=False):
+        x = self.batch_norm(inputs, training=training)
+        x1 = self.gravnet1(x)
+        x2 = self.gravnet2(x1)
+        x = tf.concat([x1, x2], axis=-1)
+        x = self.dense1(x)
+        x = self.dense2(x)
+        x = self.dense3(x)
+        x = self.batch_norm2(x, training=training)
+        return self.output_layer(x)
+    
+    

@@ -1,0 +1,35 @@
+2025-02-20 16:31:51.113865: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcudart.so.11.0
+Traceback (most recent call last):
+  File "scripts/test_loader.py", line 1, in <module>
+    import tensorflow as tf
+  File "/usr/local/lib/python3.6/dist-packages/tensorflow/__init__.py", line 41, in <module>
+    from tensorflow.python.tools import module_util as _module_util
+  File "/usr/local/lib/python3.6/dist-packages/tensorflow/python/__init__.py", line 48, in <module>
+    from tensorflow.python import keras
+  File "/usr/local/lib/python3.6/dist-packages/tensorflow/python/keras/__init__.py", line 27, in <module>
+    from tensorflow.python.keras import models
+  File "/usr/local/lib/python3.6/dist-packages/tensorflow/python/keras/models.py", line 26, in <module>
+    from tensorflow.python.keras.engine import functional
+  File "/usr/local/lib/python3.6/dist-packages/tensorflow/python/keras/engine/functional.py", line 38, in <module>
+    from tensorflow.python.keras.engine import training as training_lib
+  File "/usr/local/lib/python3.6/dist-packages/tensorflow/python/keras/engine/training.py", line 45, in <module>
+    from tensorflow.python.keras import callbacks as callbacks_module
+  File "/usr/local/lib/python3.6/dist-packages/tensorflow/python/keras/callbacks.py", line 49, in <module>
+    from tensorflow.python.keras.utils.data_utils import Sequence
+  File "/usr/local/lib/python3.6/dist-packages/tensorflow/python/keras/utils/data_utils.py", line 45, in <module>
+    from six.moves.urllib.request import urlopen
+  File "/usr/local/lib/python3.6/dist-packages/six.py", line 92, in __get__
+    result = self._resolve()
+  File "/usr/local/lib/python3.6/dist-packages/six.py", line 160, in _resolve
+    module = _import_module(self.mod)
+  File "/usr/local/lib/python3.6/dist-packages/six.py", line 82, in _import_module
+    __import__(name)
+  File "/usr/lib/python3.6/urllib/request.py", line 88, in <module>
+    import http.client
+  File "<frozen importlib._bootstrap>", line 971, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 955, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 665, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 674, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 764, in get_code
+  File "<frozen importlib._bootstrap_external>", line 832, in get_data
+KeyboardInterrupt

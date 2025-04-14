@@ -270,7 +270,7 @@ with tf.device('/cpu:0'):
     means = [10., 10., 50.]
     sigmas = [5., 5., 5.]
 
-    n_showers = 10
+    n_showers = 100
 
     dx = np.abs(np.random.normal(means[0], sigmas[0], n_showers))
     dy = np.abs(np.random.normal(means[1], sigmas[1], n_showers))
