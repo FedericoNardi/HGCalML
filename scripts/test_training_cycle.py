@@ -1,201 +1,96 @@
 
-import numpy as np
-import matplotlib.pyplot as plt
 import tensorflow as tf
-from tqdm import tqdm
+import numpy as np
 from Layers import DictModel
 from LossLayers import LLFractionRegressor
-from modules.datastructures import TrainData_python
-from genModules.Event import EventGenerator
-import tensorflow as tf
-
-gpu_devices = tf.config.experimental.list_physical_devices('GPU')
-for device in gpu_devices:
-        tf.config.experimental.set_memory_growth(device, True)
-
-# from K import Layer
-import numpy as np
-
-from tensorflow.keras.layers import Dense, Concatenate
-# from datastructures import TrainData_crilin_reduce
-
+from GravNetLayersRagged import RaggedGravNet, DistanceWeightedMessagePassing
+from Layers import ScaledGooeyBatchNorm2
 from DeepJetCore.DJCLayers import StopGradient
-
-from model_blocks import create_outputs, condition_input
-
-from GravNetLayersRagged import RaggedGravNet
-from GravNetLayersRagged import DistanceWeightedMessagePassing
-
-from Layers import RaggedGlobalExchange, DistanceWeightedMessagePassing
-from Layers import ScaledGooeyBatchNorm2 
-
-from Regularizers import AverageDistanceRegularizer
-
-from model_blocks import extent_coords_if_needed
-
-
+from model_blocks import condition_input, extent_coords_if_needed
 from DebugLayers import PlotCoordinates
+from genModules.Event import EventGenerator
+from tqdm import tqdm
 
-# ------------ MODEL DEFINITION HERE ------------
+# ========== Model Parameters ==========
+dense_activation = 'elu'
+batchnorm_options = {}
+n_neighbours = [64, 64]
+total_iterations = len(n_neighbours)
+n_cluster_space_coordinates = 3
+
+# ========== Inputs Interpretation ==========
 def interpretAllModelInputs(ilist, returndict=True):
-    if not returndict:
-        raise ValueError('interpretAllModelInputs: Non-dict output is DEPRECATED. PLEASE REMOVE') 
-    '''
-    input: the full list of keras inputs
-    returns: td
-     - rechit feature array
-     - t_idx
-     - t_energy
-     - t_pos
-     - t_time
-     - t_pid :             non hot-encoded pid
-     - t_spectator :       spectator score, higher: further from shower core
-     - t_fully_contained : fully contained in calorimeter, no 'scraping'
-     - t_rec_energy :      the truth-associated deposited 
-                           (and rechit calibrated) energy, including fractional assignments)
-     - t_is_unique :       an index that is 1 for exactly one hit per truth shower
-     - row_splits
-     
-    '''
     out = {
-        'features':ilist[0],
-        't_idx':ilist[2],
-        't_energy':ilist[4],
-        't_pos':ilist[6],
-        't_time':ilist[8],
-        't_pid':ilist[10],
-        't_spectator':ilist[12],
-        't_fully_contained':ilist[14],
-        'row_splits':ilist[1]
-        }
-    print('List kength: ', len(ilist))
-    #keep length check for compatibility
-    if len(ilist)>16:
-        out['t_rec_energy'] = ilist[16]
-    if len(ilist)>18:
-        out['t_is_unique'] = ilist[18]
-        print('UNIQUE IDX: ',out['t_is_unique'])
-    if len(ilist) > 20:
-        out['t_sig_fraction'] = ilist[20]
+        'features': ilist[0],
+        'row_splits': ilist[1],
+        't_idx': ilist[2],
+        't_energy': ilist[3],
+        'coords': ilist[4],
+        't_time': ilist[5],
+        't_pid': ilist[6],
+        't_spectator': ilist[7],
+        't_fully_contained': ilist[8],
+        'rechit_energy': ilist[9],
+        't_is_unique': ilist[10],
+        't_sig_fraction': ilist[11],
+    }
     return out
 
-def gravnet_model(Inputs,
-                  debug_outdir=None,
-                  plot_debug_every=200
-                  # pass_through=True
-                  ):
-    ####################################################################################
-    ##################### Input processing, no need to change much here ################
-    ####################################################################################
+# ========== Model Definition ==========
+def gravnet_model(Inputs):
+    pre = interpretAllModelInputs(Inputs)
+    pre = condition_input(pre, no_scaling=True)
+    pre['features'] = ScaledGooeyBatchNorm2(fluidity_decay=0.1)(pre['features'])
+    pre['coords'] = ScaledGooeyBatchNorm2(fluidity_decay=0.1)(pre['coords'])
 
-    pre_selection = interpretAllModelInputs(Inputs,returndict=True)
-    pre_selection = condition_input(pre_selection, no_scaling=True)
-    pre_selection['features'] = ScaledGooeyBatchNorm2(fluidity_decay=0.1)(pre_selection['features']) #this can decay quickly, the input doesn't change 
-    pre_selection['coords'] = ScaledGooeyBatchNorm2(fluidity_decay=0.1)(pre_selection['coords'])
-
-    t_spectator_weight = 0.*pre_selection['t_spectator']
-    rs = pre_selection['row_splits']
-                               
-    x_in = pre_selection['features'] #Concatenate()([pre_selection['coords'],
-                           
-    x = x_in
-    energy = pre_selection['rechit_energy']
-    c_coords = pre_selection['coords'] # pre-clustered coordinates
-    t_idx = pre_selection['t_idx']
-    
-    ####################################################################################
-    ##################### now the actual model goes below ##############################
-    ####################################################################################
-
-    # this is just for reference and occasionally plots the input shower(s)
-    #c_coords = PlotCoordinates(plot_every = plot_debug_every, outdir = debug_outdir,
-    #                               name='input_coords')([c_coords,
-    #                                                                energy,
-    #                                                                t_idx,
-    #                                                                rs])
+    x = pre['features']
+    c_coords = extent_coords_if_needed(pre['coords'], x, n_cluster_space_coordinates)
+    rs = pre['row_splits']
+    energy = pre['rechit_energy']
+    t_idx = pre['t_idx']
     
     allfeat = []
-    
-    #extend coordinates already here if needed
-    c_coords = extent_coords_if_needed(c_coords, x, n_cluster_space_coordinates)
-    print('---> A')
-    for i in range(total_iterations):
 
-        # derive new coordinates for clustering
-        #x = RaggedGlobalExchange()([x, rs])
-        
-        x = Dense(64,activation=dense_activation)(x)
-        x = Dense(64,activation=dense_activation)(x)
-        x = Dense(64,activation=dense_activation)(x)
+    for i in range(total_iterations):
+        x = tf.keras.layers.Dense(64, activation=dense_activation)(x)
+        x = tf.keras.layers.Dense(64, activation=dense_activation)(x)
         x = ScaledGooeyBatchNorm2(**batchnorm_options)(x)
-        ### reduction done
-        
-        n_dims = 6
-        #exchange information, create coordinates
-        x = Concatenate()([c_coords,x])
-        xgn, gncoords, gnnidx, gndist = RaggedGravNet(n_neighbours=n_neighbours[i],
-                                                 n_dimensions=n_dims,
-                                                 n_filters=64,
-                                                 n_propagate=64,
-                                                 record_metrics=True,
-                                                 coord_initialiser_noise=1e-2,
-                                                 use_approximate_knn=False #weird issue with that for now
-                                                 )([x, rs])
-        
-        x = Concatenate()([x,xgn])                                                      
-        #just keep them in a reasonable range  
-        #safeguard against diappearing gradients on coordinates                                       
-        gndist = AverageDistanceRegularizer(strength=1e-4,
-                                            record_metrics=False # was true
-                                            )(gndist)
-                                            
-        # gncoords = PlotCoordinates(plot_every = plot_debug_every, outdir = debug_outdir,
-        #                            name='gn_coords_'+str(i))([gncoords, 
-        #                                                             energy,
-        #                                                             t_idx,
-        #                                                             rs]) 
-        
+
+        x = tf.keras.layers.Concatenate()([c_coords, x])
+        xgn, gncoords, gnnidx, gndist = RaggedGravNet(
+            n_neighbours=n_neighbours[i],
+            n_dimensions=6,
+            n_filters=64,
+            n_propagate=64,
+            coord_initialiser_noise=1e-2
+        )([x, rs])
+
+        x = tf.keras.layers.Concatenate()([x, xgn])
         gncoords = StopGradient()(gncoords)
-        x = Concatenate()([gncoords,x])           
-        
-        x = DistanceWeightedMessagePassing([64,64,32,32,16,16],
-                                           activation=dense_activation
-                                           )([x,gnnidx,gndist])
-            
+        x = tf.keras.layers.Concatenate()([gncoords, x])
+
+        x = DistanceWeightedMessagePassing([64, 64, 32, 32], activation=dense_activation)(
+            [x, gnnidx, gndist]
+        )
+
+        x = tf.keras.layers.Dense(64, activation=dense_activation)(x)
         x = ScaledGooeyBatchNorm2(**batchnorm_options)(x)
-        
-        x = Dense(64,name='dense_past_mp_'+str(i),activation=dense_activation)(x)
-        x = Dense(64,activation=dense_activation)(x)
-        x = Dense(64,activation=dense_activation)(x)
-        
-        x = ScaledGooeyBatchNorm2(**batchnorm_options)(x)
-        
-        
         allfeat.append(x)
-    
-    print('---> B')
-    x = Concatenate()([c_coords]+allfeat)
-    #do one more exchange with all
-    x = Dense(64,activation=dense_activation)(x)
-    x = Dense(64,activation=dense_activation)(x)
-    x = Dense(64,activation=dense_activation)(x)
-    signal_score = Dense(1, activation='sigmoid', name='signal_score')(x)
-    print('---> C')
+
+    x = tf.keras.layers.Concatenate()([c_coords] + allfeat)
+    x = tf.keras.layers.Dense(64, activation=dense_activation)(x)
+    x = tf.keras.layers.Dense(64, activation=dense_activation)(x)
+
+    signal_score = tf.keras.layers.Dense(1, activation='sigmoid', name='signal_score')(x)
+
     signal_score = LLFractionRegressor(
         name='signal_score_regressor',
-        record_metrics=True,
-        print_loss=True, 
-        mode='regression_mse' # "binary" or "regression_bce" or "regression_mse"
-        )([signal_score,pre_selection['t_sig_fraction']])   
-    print('---> D')           
-    model_outputs = {'signal_fraction' : signal_score}
-    print('---> E')
-    return DictModel(inputs=Inputs, outputs=model_outputs)
+        mode='regression_mse'
+    )([signal_score, pre['t_sig_fraction']])
 
-# ------------ END OF MODEL DEFINITION ------------
+    return DictModel(inputs=Inputs, outputs={'signal_fraction': signal_score})
 
-# Some helper functions now:
-# Loop through each shower and generate features
+# ========== Generator & Dataset ==========
 def generate_showers(centroids, energy, threshold=0.):
     row_splits = [0]
     generator = EventGenerator()
@@ -204,7 +99,7 @@ def generate_showers(centroids, energy, threshold=0.):
     filtered_volumes = []
     filtered_signal = []
 
-    for i in range(len(energy)):
+    for i in tqdm(range(len(energy))):
         dE, vols, sig = generator(centroids, energy[i])  # (n_centroids,)
         mask = dE > threshold
 
@@ -234,7 +129,7 @@ def generate_showers(centroids, energy, threshold=0.):
 
     return feature_list, row_splits
 
-def get_feature_list(centroids, n_showers=100, isTraining=False):
+def get_feature_list(centroids, n_showers=10, isTraining=False):
     energy = tf.random.uniform((n_showers, ), minval=10,maxval=150)
 
     features_list, row_splits = generate_showers(centroids, energy)
@@ -275,93 +170,62 @@ def get_feature_list(centroids, n_showers=100, isTraining=False):
               tf.divide(features_list[:,3], features_list[:,4]+1e-5), tf.identity(row_splits)]
     return inputs
 
-# --------- CODE STARTS HERE -----------
+def data_generator(batch_size=1, n_showers=5):
+    def generator():
+        for _ in range(100000):  # or `while True` if you prefer
+            centroids = tf.random.uniform((12, 3), minval=-200, maxval=200)
+            features = get_feature_list(centroids, n_showers=n_showers, isTraining=True)
+            assert features is not None, "get_feature_list returned None"
+            assert len(features) == 22, f"Expected 22 features, got {len(features)}"
+            yield tuple(features)
 
-import globals
-if False: #for testing
-    globals.acc_ops_use_tf_gradients = True 
-    globals.knn_ops_use_tf_gradients = True
+    output_signature = tuple([
+        tf.TensorSpec(shape=(None, 10), dtype=tf.float32),  # features
+        tf.TensorSpec(shape=(None,), dtype=tf.int32),       # row_splits 1
+        tf.TensorSpec(shape=(None,), dtype=tf.int32),       # t_idx
+        tf.TensorSpec(shape=(None,), dtype=tf.int32),       # row_splits 2
+        tf.TensorSpec(shape=(None,), dtype=tf.float32),     # t_energy
+        tf.TensorSpec(shape=(None,), dtype=tf.int32),       # row_splits 3
+        tf.TensorSpec(shape=(None,), dtype=tf.float32),     # t_pos x
+        tf.TensorSpec(shape=(None,), dtype=tf.float32),     # t_pos y
+        tf.TensorSpec(shape=(None,), dtype=tf.float32),     # t_pos z
+        tf.TensorSpec(shape=(None,), dtype=tf.int32),       # row_splits 4
+        tf.TensorSpec(shape=(None,), dtype=tf.float32),     # t_time
+        tf.TensorSpec(shape=(None,), dtype=tf.int32),       # row_splits 5
+        tf.TensorSpec(shape=(None,), dtype=tf.float32),     # t_pid
+        tf.TensorSpec(shape=(None,), dtype=tf.int32),       # row_splits 6
+        tf.TensorSpec(shape=(None,), dtype=tf.float32),     # t_spectator
+        tf.TensorSpec(shape=(None,), dtype=tf.int32),       # row_splits 7
+        tf.TensorSpec(shape=(None,), dtype=tf.float32),     # t_fully_contained
+        tf.TensorSpec(shape=(None,), dtype=tf.int32),       # row_splits 8
+        tf.TensorSpec(shape=(None,), dtype=tf.float32),     # t_rec_energy
+        tf.TensorSpec(shape=(None,), dtype=tf.int32),       # row_splits 9
+        tf.TensorSpec(shape=(None,), dtype=tf.float32),     # is_unique
+        tf.TensorSpec(shape=(None,), dtype=tf.int32),       # row_splits 10
+        tf.TensorSpec(shape=(None,), dtype=tf.float32),     # signal_fraction
+        tf.TensorSpec(shape=(None,), dtype=tf.int32),       # row_splits 11
+    ])
 
-batchnorm_options={}
+    return tf.data.Dataset.from_generator(
+        generator,
+        output_signature=output_signature
+    ).prefetch(tf.data.AUTOTUNE)
 
-#loss options:
-loss_options={
-    'energy_loss_weight': 0.5,
-    'q_min': 1.5,
-     #'s_b': 1.2, # Added bkg suppression factor
-    'use_average_cc_pos': 0.1,
-    'classification_loss_weight':0.,
-    'too_much_beta_scale': 1e-5 ,
-    'position_loss_weight':1e-5,
-    'timing_loss_weight':0.,
-    #'beta_loss_scale':.25,
-    'beta_push': 0.0 # keep at zero
-    }
+# ========== Build and Compile ==========
+dataset = data_generator(batch_size=1, n_showers=5)
 
-#elu behaves much better when training
-dense_activation='elu'
+# Sanity check
+example_batch = next(iter(dataset))
+print("Got a batch!", type(example_batch))
 
-record_frequency=10
-plotfrequency=10 #plots every 1k batches
+model = gravnet_model(example_batch)
+model.compile(optimizer=tf.keras.optimizers.Nadam(1e-3))
+# Train model
+model.fit(
+    dataset,
+    epochs=5,
+    steps_per_epoch=1
+)
 
-learningrate = 1e-3
-nbatch = 20000
-if globals.acc_ops_use_tf_gradients: #for tf gradients the memory is limited
-    nbatch = 60000
-
-#iterations of gravnet blocks
-n_neighbours=[64,64]
-total_iterations = len(n_neighbours)
-
-n_cluster_space_coordinates = 3
-
-# Define optimizer
-opt = tf.keras.optimizers.Nadam(learning_rate=0.1)
-
-
-# Prepare the model
-import training_base_hgcal
-train = training_base_hgcal.HGCalTraining()
-
-N = 5
-centroids = tf.random.uniform((N, 3), minval=-200, maxval=200)
-centroids = tf.Variable(centroids)
-
-'''
-shapes = train.train_data.getNumpyFeatureShapes()
-inputdtypes = train.train_data.getNumpyFeatureDTypes()
-inputnames = train.train_data.getNumpyFeatureArrayNames()
-
-for i in range(len(inputnames)): #in case they are not named
-    if inputnames[i]=="" or inputnames[i]=="_rowsplits":
-        inputnames[i]="input_"+str(i)+inputnames[i]
-
-train.keras_inputs=[]
-train.keras_inputsshapes=[]
-
-for s,dt,n in zip(shapes,inputdtypes,inputnames):
-    train.keras_inputs.append(tf.keras.layers.Input(shape=s, dtype=dt, name=n))
-    train.keras_inputsshapes.append(s)
-'''
-
-input = get_feature_list(centroids, n_showers=10)
-keras_model = gravnet_model(input)
-keras_model.compile(optimizer=tf.keras.optimizers.Adam(lr=learningrate))
-
-# model in training mode
-keras_model.trainable = True   
-
-print('--> Getting Features list!')
-
-# Evaluate the model on a set of generated showers
-
-keras_model.fit()
-
-print('--> Trained model')
-
-keras_model.save('model.keras')
-
-print('--> Saved model')
-
-
-
+# ========== Train ==========
+model.fit(dataset, epochs=10, steps_per_epoch=1)

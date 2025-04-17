@@ -1,17 +1,13 @@
-from DeepJetCore.TrainData import TrainData, fileTimeOut
-from DeepJetCore import SimpleArray
+# modules/datastructures/TrainData_PhotonSim.py
+from DeepJetCore.TrainData import TrainData
+from genModules.Event import EventGenerator
+from tqdm import tqdm
+import tensorflow as tf
 import numpy as np
-import uproot3 as uproot
 
-import os
-import pickle
-import gzip
-import pandas as pd
-
-from datastructures import TrainData_NanoML
-
-# Helper generator function
-def generate_showers(centroids, energy, threshold=0.1):
+# helper functions
+# Loop through each shower and generate features
+def generate_showers(centroids, energy, threshold=0.):
     row_splits = [0]
     generator = EventGenerator()
     
@@ -19,14 +15,14 @@ def generate_showers(centroids, energy, threshold=0.1):
     filtered_volumes = []
     filtered_signal = []
 
-    for i in range(len(energy)):
+    for i in tqdm(range(len(energy))):
         dE, vols, sig = generator(centroids, energy[i])  # (n_centroids,)
         mask = dE > threshold
 
         filtered_deposits = tf.boolean_mask(dE, mask)
-        _X = tf.boolean_mask(centroids[:,0][..., tf.newaxis], mask)
-        _Y = tf.boolean_mask(centroids[:,1][..., tf.newaxis], mask)
-        _Z = tf.boolean_mask(centroids[:,2][..., tf.newaxis], mask)
+        _X = tf.identity(tf.boolean_mask(centroids[:,0][..., tf.newaxis], mask))
+        _Y = tf.identity(tf.boolean_mask(centroids[:,1][..., tf.newaxis], mask))
+        _Z = tf.identity(tf.boolean_mask(centroids[:,2][..., tf.newaxis], mask))
         filtered_volumes = tf.boolean_mask(vols[..., tf.newaxis], mask)
         filtered_signal = tf.boolean_mask(sig, mask)
 
@@ -44,11 +40,12 @@ def generate_showers(centroids, energy, threshold=0.1):
                 axis=0
             )
         row_splits.append(row_splits[-1]+filtered_deposits.shape[0])
+    
+    row_splits = tf.constant(row_splits, dtype=tf.int32)
 
     return feature_list, row_splits
 
-def get_feature_list(centroids, n_showers=10, isTraining=False):
-
+def get_feature_list(centroids, n_showers=100, isTraining=False):
     energy = tf.random.uniform((n_showers, ), minval=10,maxval=150)
 
     features_list, row_splits = generate_showers(centroids, energy)
@@ -72,59 +69,58 @@ def get_feature_list(centroids, n_showers=10, isTraining=False):
     ], axis=1)
 
     # truth: isSignal, evt_trueE, t_pos (3*zerosf), t_time, t_pid, t_spectator, t_fully_contained (1), evt_dE, is_unique, signalFraction
-
-    if isTraining: # Use numpy instead of tf for training
-        inputs = [farr.numpy(), row_splits.numpy(), 
-                  np.where(features_list[:,4]>0.5*features_list[:,3], 1, 0), row_splits.numpy(), 
-                  features_list[:,4].numpy(), row_splits.numpy(),
-                  np.concatenate([features_list[:,0].numpy(), features_list[:,0].numpy(), features_list[:,0].numpy()], axis=-1), row_splits.numpy(),
-                  zerosf.numpy(), row_splits.numpy(),
-                  zerosf.numpy(), row_splits.numpy(),
-                  zerosf.numpy(), row_splits.numpy(),
-                  zerosf.numpy()+1., row_splits.numpy(),
-                  features_list[:,5] * np.ones_like(features_list[:,0].numpy()), row_splits.numpy(),
-                  zerosf.numpy(), row_splits.numpy(),
-                  features_list[:,3].numpy()/features_list[:,4].numpy(), row_splits.numpy()]
-    else:
-        inputs = [farr, row_splits, 
-                  tf.where(features_list[:,4]>0.5*features_list[:,3], 1, 0), row_splits, 
-                  features_list[:,4], tf.identity(row_splits),
-                  tf.concat([features_list[:,0], features_list[:,0], features_list[:,0]], axis=-1), tf.identity(row_splits),
-                  tf.zeros_like(features_list[:,0]), tf.identity(row_splits),
-                  tf.zeros_like(features_list[:,0]), tf.identity(row_splits),
-                  tf.zeros_like(features_list[:,0]), tf.identity(row_splits),
-                  tf.zeros_like(features_list[:,0])+1., tf.identity(row_splits),
-                  features_list[:,5], tf.identity(row_splits),
-                  tf.zeros_like(features_list[:,0]), tf.identity(row_splits),
-                  tf.divide(features_list[:,3], features_list[:,4]), tf.identity(row_splits)]
+    inputs = [farr, tf.identity(row_splits), 
+              tf.where(features_list[:,4]>0.5*features_list[:,3], 1, 0), tf.identity(row_splits), 
+              features_list[:,4], tf.identity(row_splits),
+              tf.concat([
+                tf.identity(features_list[:,0]),
+                tf.identity(features_list[:,0]),
+                tf.identity(features_list[:,0])
+              ], axis=-1), tf.identity(row_splits),
+              tf.zeros_like(features_list[:,0]), tf.identity(row_splits),
+              tf.zeros_like(features_list[:,0]), tf.identity(row_splits),
+              tf.zeros_like(features_list[:,0]), tf.identity(row_splits),
+              tf.zeros_like(features_list[:,0])+1., tf.identity(row_splits),
+              features_list[:,5], tf.identity(row_splits),
+              tf.zeros_like(features_list[:,0]), tf.identity(row_splits),
+              tf.divide(features_list[:,3], features_list[:,4]+1e-5), tf.identity(row_splits)]
     return inputs
 
-class TrainData_python(TrainData_NanoML):
+class TrainData_Python(TrainData):
     def __init__(self, centroids):
-        TrainData_NanoML.__init__(self)
+        super().__init__()
+        self.description = "PhotonSim reconstructed showers"
+        self.truthclasses = ['signalFraction']
+        # self.registerBranches(['isSignal'])  # You can add more here
+        self.weightbranchX = 'none'  # if you're not weighting samples
         self.centroids = centroids
 
-    def convertFromSourceFile(self, filename, weighterobjects, istraining, treename="converted_photons"):
-        
-        '''
-        
-        hit_x, hit_y, hit_z: the spatial coordinates of the voxel centroids that registered the hit
-        hit_dE: the energy registered in the voxel (signal + BIB noise)
-        recHit_dE: the 'reconstructed' hit energy, i.e. the energy deposited by signal only
-        evt_dE: the total energy deposited by the signal photon in the calorimeter
-        evt_ID: an int label for each event -only for bookkeeping, should not be needed
-        isSignal: a flag, -1 if only BIB noise, 0 if there is also signal hit deposition
+    def convertFromSourceFile(self, filename, weighterobjects):
+        """
+        Called by DeepJetCore to parse and load your input data.
+        Replace this with your simulation generator.
+        """
 
-        '''
-        return get_feature_list(self.centroids)
-        
+        inputs = get_feature_list(self.centroids)
 
-        
-        
-        
-        
-        
-    
-    
-    
- 
+        # Assign
+        self.x = [inputs[0]]  # feature array
+        self.rs = [inputs[1]]  # row splits
+
+        self.y = [inputs[18]]  # isSignal
+        self.truthdata = [inputs[4], inputs[6], inputs[8]]  # pick only relevant ones
+
+        # you can add weights if needed:
+        self.w = [np.ones_like(inputs[18])]  # dummy weights
+
+        self.originaltruth = self.y[0]  # Needed for loss printing etc.
+
+        # Cast to np arrays, if not already
+        self._finalize()
+
+    def _finalize(self):
+        self.x = [x.numpy() if hasattr(x, 'numpy') else x for x in self.x]
+        self.rs = [r.numpy() if hasattr(r, 'numpy') else r for r in self.rs]
+        self.y = [y.numpy() if hasattr(y, 'numpy') else y for y in self.y]
+        self.truthdata = [td.numpy() if hasattr(td, 'numpy') else td for td in self.truthdata]
+        self.w = [w.numpy() if hasattr(w, 'numpy') else w for w in self.w]
