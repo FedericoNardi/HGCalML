@@ -172,31 +172,6 @@ class GravNetLayer(tf.keras.layers.Layer):
         ])
     
     def call(self, inputs):
-
-        # Assume inputs: (B, N, F), split positions and features
-        positions, features = inputs[..., :2], inputs[..., 2:]
-    
-        # Compute pairwise distances (B, N, N)
-        dists = tf.norm(
-            tf.expand_dims(positions, 2) - tf.expand_dims(positions, 1),
-            axis=-1
-        )
-
-        # Compute k-NN indices (B, N, k)
-        knn_indices = tf.argsort(dists, axis=-1)[..., 1:self.k+1]
-    
-        # Gather neighbor features (B, N, k, F)
-        neighbor_features = tf.gather(features, knn_indices, batch_dims=1)
-    
-        # Aggregate: (B, N, F)
-        aggregated_features = tf.reduce_mean(neighbor_features, axis=-2)
-    
-        # MLP: (B, N, F')
-        updated_features = self.mlp(aggregated_features)
-    
-        return tf.concat([positions, updated_features], axis=-1)
-
-    def bak_call(self, inputs):
         positions, features = inputs[..., :2], inputs[..., 2:]
         # Compute distance matrix
         dists = tf.norm(tf.expand_dims(positions, 2) - tf.expand_dims(positions, 1), axis=-1)
@@ -221,6 +196,7 @@ class GravNetBlock():
         self.dense1 = tf.keras.layers.Dense(64, activation='relu')
         self.bn2 = tf.keras.layers.BatchNormalization()
         self.dense2 = tf.keras.layers.Dense(64, activation='relu')
+        self.global_exchange = self.global_exchange = tf.keras.layers.GlobalAveragePooling1D()
         self.dense3 = tf.keras.layers.Dense(64, activation='relu')
         self.bn3 = tf.keras.layers.BatchNormalization()
     def __call__(self, x):
@@ -229,8 +205,7 @@ class GravNetBlock():
         x = self.dense1(x)
         x = self.bn2(x)
         x = self.dense2(x)
-        global_feat = tf.reduce_mean(x, axis=1, keepdims=True)  # shape: (B, 1, F)
-        x = tf.concat([x, tf.tile(global_feat, [1, tf.shape(x)[1], 1])], axis=-1)  # shape: (B, N, 2F)
+        x = self.global_exchange(x)
         x = self.dense3(x)
         x = self.bn3(x)
         return x
@@ -259,5 +234,7 @@ class ShowerGNN(tf.keras.Model):
         x = self.dense3(x)
         x = self.batch_norm2(x, training=training)
         return self.output_layer(x)
+
+        
     
     

@@ -80,44 +80,22 @@ class BibModel:
         self.X_train = tf.convert_to_tensor(X_data, dtype=tf.float32)
         self.Y_train = tf.convert_to_tensor(Y_data, dtype=tf.float32)
 
-        # --- Compute Kernel Matrices ---
-        self.K_nn = rbf_kernel(self.X_train, self.X_train, self.variance, self.length_scales) + self.noise_variance * tf.eye(self.X_train.shape[0])
-
-        # Compute the Cholesky decomposition and solve for alpha
+        self.K_nn = rbf_kernel(self.X_train, self.X_train, self.variance, self.length_scales) + \
+                    self.noise_variance * tf.eye(self.X_train.shape[0])
         self.L_nn = tf.linalg.cholesky(self.K_nn)
         self.alpha = tf.linalg.cholesky_solve(self.L_nn, self.Y_train)
 
-    @tf.function
-    def predict(self, X_test):
-        """Predict with Full GPR"""
-        K_ns = rbf_kernel(self.X_train, X_test, self.variance, self.length_scales)  # [num_train, num_test]
-        K_ss = rbf_kernel(X_test, X_test, self.variance, self.length_scales) + self.noise_variance * tf.eye(X_test.shape[0])
-        mu_s = tf.matmul(K_ns, self.alpha, adjoint_a=True)  # Mean prediction
+        # ✅ Precompile predict once with relaxed shape
+        self._predict_fn = tf.function(self._predict, experimental_relax_shapes=True)
+
+    def _predict(self, X_test):
+        K_ns = rbf_kernel(self.X_train, X_test, self.variance, self.length_scales)
+        K_ss = rbf_kernel(X_test, X_test, self.variance, self.length_scales) + \
+               self.noise_variance * tf.eye(X_test.shape[0])
+        mu_s = tf.matmul(K_ns, self.alpha, adjoint_a=True)
         v = tf.linalg.triangular_solve(self.L_nn, K_ns, lower=True)
-        var_s = K_ss - tf.matmul(v, v, transpose_a=True)  # Variance
+        var_s = K_ss - tf.matmul(v, v, transpose_a=True)
         return mu_s, tf.linalg.diag_part(var_s)
-    
-    def test(self, test_size=500):
-        # Try to generate intermediate layers too
-        n_layers = 10
-        _x = self.X_train
-        print(_x.shape)
-        _pred = self.predict(_x)
-        return _pred[0].numpy(), self.Y_train
-    
-    def batch_predict(self, features, batch_size=1000):
-        '''
-        Function to predict BIB deposits in batches to reduce dimensionality
-        Example usage: deposits = batched_predict(bib_model, bib_features)
-        '''
-        dataset = tf.data.Dataset.from_tensor_slices(features)
-        dataset = dataset.batch(batch_size)
-        dataset = dataset.prefetch(tf.data.AUTOTUNE)
 
-        predictions = []
-        for batch in tqdm(dataset):
-            pred = self.predict(batch)[0]
-            predictions.append(pred)
-
-        return tf.concat(predictions, axis=0)
-
+    def predict(self, X_test):
+        return self._predict_fn(X_test)

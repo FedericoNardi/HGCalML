@@ -22,10 +22,10 @@ class InflateShower:
 
         return fractions
 
-    def __init__(self, grid_size=100, num_iterations=25000):
+    def __init__(self, grid_size=50, num_iterations=25000):
         self.fractions = self._compute_ring_fractions(grid_size)
         self.grid_size = grid_size
-        self.g_rz = tf.Variable(tf.zeros([50, grid_size]), trainable=True, dtype=tf.float32)
+        self.g_rz = tf.Variable(tf.zeros([int(grid_size/2), grid_size]), trainable=True, dtype=tf.float32)
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.1)
         self.num_iterations = num_iterations
 
