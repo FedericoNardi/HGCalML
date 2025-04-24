@@ -2,6 +2,6 @@
 
 from .generator import Shower, ShowerGNN
 from .bib import Model, BibModel
-from .InflateShower import InflateShower
-from .Processer import Voronoi3D
-from .Event import EventGenerator
+from .InflateShower import InflateShower, InflateShower_v2
+from .Processer_v2 import Voronoi3D
+from .Event import EventGenerator, EventGenerator_v2

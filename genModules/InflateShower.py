@@ -53,3 +53,59 @@ class InflateShower:
         E_pred = tf.einsum('rz,xyr->xyz', g_rz_pred, self.fractions)
         E_pred = tf.where(E_pred > 1e-3, E_pred, 0)
         return E_pred
+
+class InflateShower_v2:
+    def _compute_ring_fractions(self, grid_size=100, num_samples=1000):
+        fractions = np.zeros((grid_size, grid_size, grid_size//2), dtype=np.float32)
+        x_vals = np.linspace(-grid_size/2 + 0.5, grid_size/2 - 0.5, grid_size)
+        y_vals = np.linspace(-grid_size/2 + 0.5, grid_size/2 - 0.5, grid_size)
+
+        for i, x in enumerate(x_vals):
+            for j, y in enumerate(y_vals):
+                xs = x + (np.random.rand(num_samples) - 0.5)
+                ys = y + (np.random.rand(num_samples) - 0.5)
+                rs = np.sqrt(xs**2 + ys**2)
+                for r in range(1, grid_size//2):
+                    fractions[i, j, r] = np.mean((r-1 <= rs) & (rs < r))
+
+        return tf.convert_to_tensor(fractions, dtype=tf.float32)  # shape: (X, Y, R)
+
+    def __init__(self, grid_size=50, num_iterations=2500):
+        self.grid_size = grid_size
+        self.num_iterations = num_iterations
+        self.fractions = self._compute_ring_fractions(grid_size)  # (X, Y, R)
+        self.optimizer_class = tf.keras.optimizers.Adam
+
+    def _fit_single(self, f_Y):
+        f_Y = tf.where(f_Y > 1e-3, f_Y, 0)
+        g_rz = tf.Variable(tf.zeros([self.grid_size//2, self.grid_size], dtype=tf.float32), trainable=True)
+        optimizer = self.optimizer_class(learning_rate=0.1)
+
+        @tf.function
+        def train_step():
+            with tf.GradientTape() as tape:
+                I_pred = tf.einsum('rz,xyr->xz', g_rz, self.fractions)
+                loss = tf.reduce_mean(tf.square(I_pred - f_Y))
+            grads = tape.gradient(loss, [g_rz])
+            optimizer.apply_gradients(zip(grads, [g_rz]))
+            g_rz.assign(tf.maximum(g_rz, 0))
+            return loss
+
+        for _ in tf.range(self.num_iterations):
+            train_step()
+
+        return g_rz
+
+    def __call__(self, f_Y):
+        # f_Y: (B, Y, Z) or (Y, Z)
+        if tf.rank(f_Y) == 2:
+            g_rz = self._fit_single(f_Y)
+            E_pred = tf.einsum('rz,xyr->xyz', g_rz, self.fractions)
+            return tf.where(E_pred > 1e-3, E_pred, 0)
+
+        def process_single(fy):
+            g_rz = self._fit_single(fy)
+            E_pred = tf.einsum('rz,xyr->xyz', g_rz, self.fractions)
+            return tf.where(E_pred > 1e-3, E_pred, 0)
+
+        return tf.map_fn(process_single, f_Y, fn_output_signature=tf.float32)
