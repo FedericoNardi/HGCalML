@@ -28,7 +28,7 @@ class TrainData_crilin_dimension(TrainData_NanoML):
         else:
             return np.expand_dims(np.array(a.flatten(),dtype=dtype), axis=1)
 
-    def convertFromSourceFile(self, filename, weighterobjects, istraining, treename="converted_photons"):
+    def convertFromSourceFile(self, filename, weighterobjects, istraining, treename="Events"):
         
         #fileTimeOut(filename, 10)#wait 10 seconds for file in case there are hiccups
         tree = uproot.open(filename)[treename]
@@ -44,22 +44,19 @@ class TrainData_crilin_dimension(TrainData_NanoML):
 
         '''
         
-        hit_x, rs = self.branchToFlatArray(tree["hit_x"], True)
-        hit_y = self.branchToFlatArray(tree["hit_y"])
-        hit_z = self.branchToFlatArray(tree["hit_z"])
-        hit_dE = self.branchToFlatArray(tree["hit_dE"])
+        hit_x, rs = self.branchToFlatArray(tree["x"], True)
+        hit_y = self.branchToFlatArray(tree["y"])
+        hit_z = self.branchToFlatArray(tree["z"])
+        hit_dE = self.branchToFlatArray(tree["dE"])
         
         zerosf = 0.*hit_dE
-
-        cell_dx = zerosf + 10 # mm
-        cell_dy = zerosf + 10 # mm
-        cell_dz = zerosf + 50 # mm
         
         #truth
-        evt_dE = self.branchToFlatArray(tree["evt_dE"])
-        evt_trueE = self.branchToFlatArray(tree["primary_E"])
-        isSignal = self.branchToFlatArray(tree["isSignal"], dtype='int32')
-        signalFraction = evt_dE/hit_dE
+        signalFraction = self.branchToFlatArray(tree["signal_fraction"])
+        evt_trueE = self.branchToFlatArray(tree["E0"])
+        isSignal = np.where(signalFraction>0.5, 1, 0).astype(np.int32)
+        evt_dE = hit_dE*signalFraction
+        hit_volume = self.branchToFlatArray(tree["volume"])
         
         zerosi = 0 * isSignal
         ### now we build the same structure as NanoML
@@ -67,9 +64,7 @@ class TrainData_crilin_dimension(TrainData_NanoML):
         farr = SimpleArray(np.concatenate([
             hit_dE,
             zerosf,
-            cell_dx,
-            cell_dy,
-            cell_dz,
+            hit_volume,
             hit_x,
             hit_y,
             hit_z,
@@ -85,7 +80,7 @@ class TrainData_crilin_dimension(TrainData_NanoML):
             't_idx' : SimpleArray(isSignal, rs), #names are optional
             't_energy' : SimpleArray(evt_trueE, rs),
             't_pos' : SimpleArray(np.concatenate(3*[zerosf],axis=-1), rs), #three coordinates
-            't_time' : SimpleArray(isSignal, rs)  ,
+            't_time' : SimpleArray(zerosf, rs)  ,
             't_pid' : SimpleArray(np.concatenate( [1+zerosi]+5*[zerosi],axis=-1 ), rs) , #6 truth classes
             't_spectator' : SimpleArray(zerosf, rs),
             't_fully_contained' : SimpleArray(zerosf + 1., rs),

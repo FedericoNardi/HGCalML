@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from tqdm import tqdm
 from Layers import DictModel
+from LossLayers import LLFractionRegressor
 from modules.datastructures import TrainData_crilin_reduce
 
 import tensorflow as tf
@@ -79,7 +80,7 @@ def interpretAllModelInputs(ilist, returndict=True):
     return out
 
 def gravnet_model(Inputs,
-                  debug_outdir=None,
+                  debug_outdir='test_pipe',
                   plot_debug_every=200
                   # pass_through=True
                   ):
@@ -107,16 +108,20 @@ def gravnet_model(Inputs,
     ####################################################################################
 
     # this is just for reference and occasionally plots the input shower(s)
-    #c_coords = PlotCoordinates(plot_every = plot_debug_every, outdir = debug_outdir,
-    #                               name='input_coords')([c_coords,
-    #                                                                energy,
-    #                                                                t_idx,
-    #                                                                rs])
+    c_coords = PlotCoordinates(plot_every = plot_debug_every, outdir = debug_outdir,
+                                   name='input_coords')([c_coords,
+                                                                    energy,
+                                                                    t_idx,
+                                                                    rs])
+
     
     allfeat = []
     
+    
+    
     #extend coordinates already here if needed
     c_coords = extent_coords_if_needed(c_coords, x, n_cluster_space_coordinates)
+        
 
     for i in range(total_iterations):
 
@@ -148,11 +153,11 @@ def gravnet_model(Inputs,
                                             record_metrics=False # was true
                                             )(gndist)
                                             
-        # gncoords = PlotCoordinates(plot_every = plot_debug_every, outdir = debug_outdir,
-        #                            name='gn_coords_'+str(i))([gncoords, 
-        #                                                             energy,
-        #                                                             t_idx,
-        #                                                             rs]) 
+        gncoords = PlotCoordinates(plot_every = plot_debug_every, outdir = debug_outdir,
+                                   name='gn_coords_'+str(i))([gncoords, 
+                                                                    energy,
+                                                                    t_idx,
+                                                                    rs]) 
         
         gncoords = StopGradient()(gncoords)
         x = Concatenate()([gncoords,x])           
@@ -169,7 +174,6 @@ def gravnet_model(Inputs,
         
         x = ScaledGooeyBatchNorm2(**batchnorm_options)(x)
         
-        
         allfeat.append(x)
         
     x = Concatenate()([c_coords]+allfeat)
@@ -184,38 +188,11 @@ def gravnet_model(Inputs,
         record_metrics=True,
         print_loss=True, 
         mode='regression_mse' # "binary" or "regression_bce" or "regression_mse"
-        )([signal_score,pre_selection['t_sig_fraction']])   
-                                
+        )([signal_score,pre_selection['t_sig_fraction']])                               
     model_outputs = {'signal_fraction' : signal_score}
     
-    return DictModel(inputs=Inputs, outputs=model_outputs)
-    # signal_score = Dense(1, activation='sigmoid', name='signal_score')(x)
-    # return signal_score
-'''
-def mlp_reduce(inputs): # AGGIUNGI AD INPUT POSIZIONE DI VOXEL + SIGNAL SCORE
-    x = ScaledGooeyBatchNorm2(fluidity_decay=0.1)(inputs)
-    x = Dense(1024,activation=dense_activation)(x)
-    x = Dense(512,activation=dense_activation)(x)
-    x = Dense(128,activation=dense_activation)(x)
-    x = Dense(64,activation=dense_activation)(x)
-    x = Dense(32,activation=dense_activation)(x)
-    x = Dense(16,activation=dense_activation)(x)
-    x = Dense(1,activation=tf.keras.activations.relu)(x)
-    return x
+    return tf.keras.Model(inputs=Inputs, outputs=model_outputs)
 
-def gravnet_model_reduced(Inputs,
-                  debug_outdir=None,
-                  plot_debug_every=200):
-    pre_selection = interpretAllModelInputs(Inputs,returndict=True)
-    gravnet_output = gravnet_model(Inputs, debug_outdir, plot_debug_every)
-    full_output = mlp_reduce(gravnet_output)
-    # Add loss layer
-    full_output = LLReduceLoss(name='reduce_loss', print_loss=True, record_metrics='True')([full_output, pre_selection['t_energy']])
-    model_outputs = {
-         'primary_energy': full_output[0]
-    }
-    return DictModel(inputs=Inputs, outputs=model_outputs)
-'''
 # ------------ END OF MODEL DEFINITION ------------
 
 import globals
@@ -336,7 +313,7 @@ def rectangle_overlap_loss(X, Y, dX, dY, sharpness=10):
 
     # Total overlap penalty
     return tf.reduce_sum(loss_X + loss_Y)
-
+'''
 # Initialize voxel grid
 X, Y, dX, dY = initialize_grid()
 
@@ -418,7 +395,7 @@ with imageio.get_writer(gif_path, mode="I", duration=0.2) as writer:
         writer.append_data(imageio.imread(frame))
 
 print(f"GIF saved as {gif_path}")
-
+'''
 # Loop through each shower and generate features
 def generate_showers(n_showers, energy, dx, dy, dz):
     row_splits = [0]
@@ -543,7 +520,7 @@ keras_model = gravnet_model(train.keras_inputs)
 keras_model.compile(optimizer=tf.keras.optimizers.Adam(lr=learningrate))
 
 # Load weights
-keras_model.load_weights("test_pipe/gravnet_model.h5")
+keras_model.load_weights("test_pyroot/KERAS_model.h5")
 
 # model not in training mode
 keras_model.trainable = False   

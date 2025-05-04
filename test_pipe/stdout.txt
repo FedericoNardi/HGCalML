@@ -1,0 +1,235 @@
+List kength:  22
+UNIQUE IDX:  KerasTensor(type_spec=TensorSpec(shape=(None, 1), dtype=tf.int32, name='9'), name='9', description="created by layer '9'")
+signal_score_regressor returning zero loss Tensor("signal_score_regressor/SelectV2:0", shape=(), dtype=float32)
+Input 0: name=recHitFeatures, shape=(None, 8), dtype=<dtype: 'float32'>
+Input 1: name=recHitFeatures_rowsplits, shape=(None, 1), dtype=<dtype: 'int64'>
+Input 2: name=1, shape=(None, 1), dtype=<dtype: 'int32'>
+Input 3: name=1_rowsplits, shape=(None, 1), dtype=<dtype: 'int64'>
+Input 4: name=2, shape=(None, 1), dtype=<dtype: 'float32'>
+Input 5: name=2_rowsplits, shape=(None, 1), dtype=<dtype: 'int64'>
+Input 6: name=3, shape=(None, 3), dtype=<dtype: 'float32'>
+Input 7: name=3_rowsplits, shape=(None, 1), dtype=<dtype: 'int64'>
+Input 8: name=4, shape=(None, 1), dtype=<dtype: 'int32'>
+Input 9: name=4_rowsplits, shape=(None, 1), dtype=<dtype: 'int64'>
+Input 10: name=5, shape=(None, 6), dtype=<dtype: 'int32'>
+Input 11: name=5_rowsplits, shape=(None, 1), dtype=<dtype: 'int64'>
+Input 12: name=6, shape=(None, 1), dtype=<dtype: 'float32'>
+Input 13: name=6_rowsplits, shape=(None, 1), dtype=<dtype: 'int64'>
+Input 14: name=7, shape=(None, 1), dtype=<dtype: 'float32'>
+Input 15: name=7_rowsplits, shape=(None, 1), dtype=<dtype: 'int64'>
+Input 16: name=8, shape=(None, 1), dtype=<dtype: 'float32'>
+Input 17: name=8_rowsplits, shape=(None, 1), dtype=<dtype: 'int64'>
+Input 18: name=9, shape=(None, 1), dtype=<dtype: 'int32'>
+Input 19: name=9_rowsplits, shape=(None, 1), dtype=<dtype: 'int64'>
+Input 20: name=10, shape=(None, 1), dtype=<dtype: 'float32'>
+Input 21: name=10_rowsplits, shape=(None, 1), dtype=<dtype: 'int64'>
+signal_score_regressor loss 0.10214824
+signal_score_regressor loss 0.118128866
+Epoch   0 | Loss = 13216.6641
+signal_score_regressor loss 0.09511104
+signal_score_regressor loss 0.1032893
+signal_score_regressor loss 0.10447097
+signal_score_regressor loss 0.10346192
+signal_score_regressor loss 0.089250125
+signal_score_regressor loss 0.11084175
+signal_score_regressor loss 0.12442772
+signal_score_regressor loss 0.08491585
+signal_score_regressor loss 0.10035491
+signal_score_regressor loss 0.10188121
+signal_score_regressor loss 0.089814834
+signal_score_regressor loss 0.14973655
+signal_score_regressor loss 0.08856187
+signal_score_regressor loss 0.09113555
+signal_score_regressor loss 0.10421307
+signal_score_regressor loss 0.09677174
+signal_score_regressor loss 0.0957108
+signal_score_regressor loss 0.09422266
+signal_score_regressor loss 0.0845105
+signal_score_regressor loss 0.090408936
+Epoch  10 | Loss = 7792.7827
+signal_score_regressor loss 0.08786906
+signal_score_regressor loss 0.109007865
+signal_score_regressor loss 0.109393306
+signal_score_regressor loss 0.1262083
+signal_score_regressor loss 0.09884098
+signal_score_regressor loss 0.14144751
+signal_score_regressor loss 0.095331855
+signal_score_regressor loss 0.123227544
+signal_score_regressor loss 0.09969142
+signal_score_regressor loss 0.102849916
+signal_score_regressor loss 0.11071154
+signal_score_regressor loss 0.090123996
+signal_score_regressor loss 0.09621991
+signal_score_regressor loss 0.1121701
+signal_score_regressor loss 0.09585555
+signal_score_regressor loss 0.10943234
+signal_score_regressor loss 0.1080109
+signal_score_regressor loss 0.10474496
+signal_score_regressor loss 0.0957773
+signal_score_regressor loss 0.0914842
+Epoch  20 | Loss = 579.7670
+signal_score_regressor loss 0.111935005
+signal_score_regressor loss 0.09124642
+signal_score_regressor loss 0.09092882
+signal_score_regressor loss 0.10375095
+signal_score_regressor loss 0.0847563
+signal_score_regressor loss 0.11368535
+signal_score_regressor loss 0.113860704
+signal_score_regressor loss 0.13542129
+signal_score_regressor loss 0.08450643
+signal_score_regressor loss 0.13643509
+signal_score_regressor loss 0.10131089
+signal_score_regressor loss 0.10415934
+signal_score_regressor loss 0.10070463
+signal_score_regressor loss 0.10397371
+signal_score_regressor loss 0.11591252
+signal_score_regressor loss 0.11694252
+signal_score_regressor loss 0.10074695
+signal_score_regressor loss 0.15308143
+signal_score_regressor loss 0.13801172
+signal_score_regressor loss 0.10740085
+Epoch  30 | Loss = 8377.1211
+signal_score_regressor loss 0.13679722
+signal_score_regressor loss 0.09081426
+signal_score_regressor loss 0.10568818
+signal_score_regressor loss 0.13554955
+signal_score_regressor loss 0.08561628
+signal_score_regressor loss 0.09568
+signal_score_regressor loss 0.09670598
+signal_score_regressor loss 0.08475275
+signal_score_regressor loss 0.119709454
+signal_score_regressor loss 0.09980258
+signal_score_regressor loss 0.12040185
+signal_score_regressor loss 0.122306205
+signal_score_regressor loss 0.10579036
+signal_score_regressor loss 0.104559086
+signal_score_regressor loss 0.09590183
+signal_score_regressor loss 0.14473242
+signal_score_regressor loss 0.14448602
+signal_score_regressor loss 0.12121992
+signal_score_regressor loss 0.1583904
+signal_score_regressor loss 0.088404685
+Epoch  40 | Loss = 25893.7539
+signal_score_regressor loss 0.12416907
+signal_score_regressor loss 0.1088318
+signal_score_regressor loss 0.14359993
+signal_score_regressor loss 0.08799096
+signal_score_regressor loss 0.10235103
+signal_score_regressor loss 0.09481044
+signal_score_regressor loss 0.1278912
+signal_score_regressor loss 0.121028826
+signal_score_regressor loss 0.11322855
+signal_score_regressor loss 0.090570584
+signal_score_regressor loss 0.096314445
+signal_score_regressor loss 0.14659727
+signal_score_regressor loss 0.14198433
+signal_score_regressor loss 0.095745064
+signal_score_regressor loss 0.110608175
+signal_score_regressor loss 0.092651755
+signal_score_regressor loss 0.09279154
+signal_score_regressor loss 0.10418736
+signal_score_regressor loss 0.091509275
+signal_score_regressor loss 0.1304406
+Epoch  50 | Loss = 8499.2266
+signal_score_regressor loss 0.08935434
+signal_score_regressor loss 0.1174823
+signal_score_regressor loss 0.1072784
+signal_score_regressor loss 0.100395314
+signal_score_regressor loss 0.10676881
+signal_score_regressor loss 0.10425536
+signal_score_regressor loss 0.112318195
+signal_score_regressor loss 0.10730747
+signal_score_regressor loss 0.104836024
+signal_score_regressor loss 0.102331914
+signal_score_regressor loss 0.09844585
+signal_score_regressor loss 0.09800306
+signal_score_regressor loss 0.09101141
+signal_score_regressor loss 0.08614633
+signal_score_regressor loss 0.12171224
+signal_score_regressor loss 0.10514323
+signal_score_regressor loss 0.094771385
+signal_score_regressor loss 0.09605383
+signal_score_regressor loss 0.13616754
+signal_score_regressor loss 0.14962319
+Epoch  60 | Loss = 15829.7520
+signal_score_regressor loss 0.11608452
+signal_score_regressor loss 0.09555006
+signal_score_regressor loss 0.099860184
+signal_score_regressor loss 0.09204738
+signal_score_regressor loss 0.09662551
+signal_score_regressor loss 0.09209167
+signal_score_regressor loss 0.08414706
+signal_score_regressor loss 0.11430819
+signal_score_regressor loss 0.09655237
+signal_score_regressor loss 0.10580176
+signal_score_regressor loss 0.11736046
+signal_score_regressor loss 0.09578344
+signal_score_regressor loss 0.10475824
+signal_score_regressor loss 0.09574623
+signal_score_regressor loss 0.10116776
+signal_score_regressor loss 0.10936041
+signal_score_regressor loss 0.10489786
+signal_score_regressor loss 0.08146893
+signal_score_regressor loss 0.09120397
+signal_score_regressor loss 0.13108206
+Epoch  70 | Loss = 12104.3604
+signal_score_regressor loss 0.0998473
+signal_score_regressor loss 0.09150225
+signal_score_regressor loss 0.14898226
+signal_score_regressor loss 0.10421991
+signal_score_regressor loss 0.117847316
+signal_score_regressor loss 0.10817687
+signal_score_regressor loss 0.089494266
+signal_score_regressor loss 0.092113785
+signal_score_regressor loss 0.12463753
+signal_score_regressor loss 0.08569532
+signal_score_regressor loss 0.091412
+signal_score_regressor loss 0.09253579
+signal_score_regressor loss 0.09064111
+signal_score_regressor loss 0.11255856
+signal_score_regressor loss 0.11365824
+signal_score_regressor loss 0.08634852
+signal_score_regressor loss 0.10016627
+signal_score_regressor loss 0.09064392
+signal_score_regressor loss 0.098176196
+signal_score_regressor loss 0.12131938
+Epoch  80 | Loss = 5036.9575
+signal_score_regressor loss 0.09669045
+signal_score_regressor loss 0.08912994
+signal_score_regressor loss 0.09952512
+signal_score_regressor loss 0.1410928
+signal_score_regressor loss 0.09468057
+signal_score_regressor loss 0.10887248
+signal_score_regressor loss 0.091950074
+signal_score_regressor loss 0.09317052
+signal_score_regressor loss 0.13630463
+signal_score_regressor loss 0.10803577
+signal_score_regressor loss 0.095466584
+signal_score_regressor loss 0.11802061
+signal_score_regressor loss 0.08571443
+signal_score_regressor loss 0.10173528
+signal_score_regressor loss 0.09183846
+signal_score_regressor loss 0.1043497
+signal_score_regressor loss 0.115656205
+signal_score_regressor loss 0.13290738
+signal_score_regressor loss 0.12628311
+signal_score_regressor loss 0.10568112
+Epoch  90 | Loss = 19756.5977
+signal_score_regressor loss 0.12672652
+signal_score_regressor loss 0.1307075
+signal_score_regressor loss 0.11365781
+signal_score_regressor loss 0.093731835
+signal_score_regressor loss 0.12759574
+signal_score_regressor loss 0.115769394
+signal_score_regressor loss 0.08370485
+signal_score_regressor loss 0.11580174
+signal_score_regressor loss 0.09112881
+signal_score_regressor loss 0.10772355
+signal_score_regressor loss 0.15627812
+signal_score_regressor loss 0.106676474
+signal_score_regressor loss 0.0962572
+signal_score_regressor loss 0.09553691
+signal_score_regressor loss 0.11519796
+signal_score_regressor loss 0.08918598
+signal_score_regressor loss 0.104609884
+signal_score_regressor loss 0.13279822

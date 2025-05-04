@@ -126,5 +126,5 @@ def plot_event(centroids, bib_density, bins=12, event_id=1, save_path="img/debug
 if __name__ == "__main__":
     # centroids, bib_density = load_event_from_root("output_root_pyroot/events_002.root")
     # plot_event(centroids, bib_density, event_id=1)
-    plot_first_10_events("output_root_pyroot/events_002.root")
+    plot_first_10_events("/media/disk/pyroot_tuples_smear/events_002.root")
     
