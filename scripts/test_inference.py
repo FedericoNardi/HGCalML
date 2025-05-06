@@ -11,6 +11,7 @@ import os
 from array import array
 from genModules.Event import EventGenerator_v2 as EventGenerator
 
+
 gpu_devices = tf.config.experimental.list_physical_devices('GPU')
 for device in gpu_devices:
         tf.config.experimental.set_memory_growth(device, True)
@@ -364,49 +365,10 @@ batch_size = 2
 centroids = generate_debug_grid_centroids(batch_size) 
 centroids = tf.Variable(centroids, dtype=tf.float32)
 
-def predict_batch(centroids):
-    batch_inputs, E0 = get_feature_list_batched(centroids)
-    preds = []
-    for single_input in batch_inputs:
-        preds.append(tf.reduce_sum(keras_model(single_input)['signal_fraction'][:,0]*single_input[0][:,0]))
-    return preds, E0
 
-# start = time.time()
-# out, E0 = predict_batch(centroids)
-# print(f'Time for tf batch predict: {time.time()-start}')
-
-# print('Predictions: ',[E for E in out])
-# print('Inputs: ',E0)
-
-# Define custom loss
-def loss_mse(E_pred, E_target):
-    return tf.reduce_mean(tf.square(E_target - E_pred))
-
-def full_loss(centroids):
-    out, E0 = predict_batch(centroids)
-    return loss_mse(out, E0)
-
-lr = 1e-6
-optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
-n_epochs = 500
-burn_in = 10
-total_loss = []
-
-def train_step(centroids):
-    with tf.GradientTape() as tape:
-        loss = full_loss(centroids)
-    grads = tape.gradient(loss, [centroids])
-    print("Grad norm:", tf.norm(grads[0]).numpy())
-    optimizer.apply_gradients(zip(grads, [centroids]))
-    return loss
-
-for epoch in range(n_epochs):
-    loss = train_step(centroids)
-    total_loss.append(loss.numpy())
-    
-    if epoch % 10 == 0:
-        print(f"Epoch {epoch:3d} | Loss = {loss.numpy():.4f}")
-
-plt.figure()
-plt.plot(total_loss)
-plt.savefig(f'img/debug/pipe_loss_{lr}.jpg')
+batch_inputs, E0 = get_feature_list_batched(centroids)
+for single_input in batch_inputs:
+    preds = keras_model(single_input)['signal_fraction']
+    deposits = single_input
+    dE = deposits[0][:,0]
+    sf = preds[:,0]

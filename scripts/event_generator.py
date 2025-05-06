@@ -98,8 +98,8 @@ def write_root_file(filename, n_events=100, min_centroids=300, max_centroids=100
             x[:n_centroids] = array('f', inputs[:,0].tolist())
             y[:n_centroids] = array('f', inputs[:,1].tolist())
             z[:n_centroids] = array('f', inputs[:,2].tolist())
-            dE[:n_centroids] = array('f', inputs[:,3].tolist())
-            vol[:n_centroids] = array('f', inputs[:,4].tolist())
+            vol[:n_centroids] = array('f', inputs[:,3].tolist())
+            dE[:n_centroids] = array('f', inputs[:,4].tolist())
             E0[:n_centroids] = array('f', inputs[:,5].tolist())
             signal_fraction[:n_centroids] = array('f', np.reshape(fracs, (-1,)).tolist())
 
@@ -170,4 +170,4 @@ def plot_event(centroids, bib_density, event_id=1, save_path="img/debug/generate
 
 # --- Entry point ---
 if __name__ == "__main__":
-    generate_multiple_root_files("/media/disk/pyroot_tuples_smear", n_files=50, events_per_file=500, batch_size=10)
+    generate_multiple_root_files("/media/disk/pyroot_tuples_smear", n_files=20, events_per_file=100, batch_size=10)
