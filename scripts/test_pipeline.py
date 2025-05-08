@@ -11,6 +11,8 @@ import os
 from array import array
 from genModules.Event import EventGenerator_v2 as EventGenerator
 
+from helpers import generate_debug_grid_centroids, generate_events, get_feature_list_single
+
 gpu_devices = tf.config.experimental.list_physical_devices('GPU')
 for device in gpu_devices:
         tf.config.experimental.set_memory_growth(device, True)
@@ -199,134 +201,9 @@ n_cluster_space_coordinates = 3
 # Create directory for frames
 os.makedirs("frames", exist_ok=True)
 
-
-
-def generate_debug_grid_centroids(batch_size):
-    """
-    Generate a Muon Collider-style 3D grid of centroids and repeat it across a batch:
-    
-    Grid definition (in mm):
-    - 50 mm spacing in z → 5 layers (0 to 200 mm)
-    - 20 mm spacing in x over 800 mm → 21 points (-400 to +400 mm)
-    - 20 mm spacing in y over 800 mm → 21 points (-400 to +400 mm)
-    
-    Args:
-    - batch_size (int): the batch dimension B
-    
-    Returns:
-    - Tensor of shape [B, N, 3] with repeated centroid coordinates
-    """
-    # Z-axis: 5 layers (0 to 200 mm)
-    z_vals = tf.linspace(0., 200., 5)
-    
-    # X and Y: 21 values from -400 to +400 mm (20 mm spacing)
-    x_vals = tf.linspace(-400., 400., 21)
-    y_vals = tf.linspace(-400., 400., 21)
-
-    # Generate the meshgrid
-    gx, gy, gz = tf.meshgrid(x_vals, y_vals, z_vals, indexing='ij')  # [21, 21, 5] each
-
-    # Flatten the grid and stack to shape [N, 3]
-    grid = tf.stack([
-        tf.reshape(gx, [-1]),
-        tf.reshape(gy, [-1]),
-        tf.reshape(gz, [-1])
-    ], axis=-1)  # [N, 3]
-
-    # Repeat grid for each item in the batch
-    grid_batched = tf.tile(tf.expand_dims(grid, axis=0), [batch_size, 1, 1])  # [B, N, 3]
-
-    return grid_batched
-
 event_gen = EventGenerator()
 
-def generate_events(centroids, event_gen=event_gen, DEBUG=True, energy_range=(10., 150.)):
-    E0 = tf.random.uniform((centroids.shape[0],), minval=energy_range[0], maxval=energy_range[1])
-    deposits, volumes, energy = event_gen(centroids, E0)
-    signal_frac = tf.divide(energy, deposits+1e-7)
-    
-    inputs = tf.concat([
-        centroids, 
-        volumes[..., tf.newaxis], 
-        deposits,
-        E0*tf.ones_like(deposits)
-        ], axis=-1)
-    targets = signal_frac
-    return inputs, targets, E0
-
-def get_feature_list_single(inputs, signal_fraction):
-    """
-    Build model input list for a single event in differentiable form.
-
-    Args:
-        inputs: tf.Tensor of shape (N, 6) — [x, y, z, dE, volume, E0]
-        signal_fraction: tf.Tensor of shape (N,) — signal weights (0 to 1)
-
-    Returns:
-        List[tf.Tensor or tf.RaggedTensor]: input format expected by the model
-    """
-    x = inputs[:, 0]
-    y = inputs[:, 1]
-    z = inputs[:, 2]
-    volume = inputs[:, 3]
-    dE = inputs[:, 4]
-    E0 = inputs[0, 5]  # constant per event
-
-    N = tf.shape(inputs)[0]
-    row_splits = tf.convert_to_tensor([0, N], dtype=tf.int64)
-
-    # Construct feature tensor matching training format
-    features = tf.stack([
-        dE,
-        tf.zeros_like(dE),
-        volume,
-        x,
-        y,
-        z,
-        tf.zeros_like(dE),
-        tf.zeros_like(dE)
-    ], axis=-1)
-
-    # Targets (only used during loss eval)
-    t_idx = tf.where(signal_fraction > 0.5, 1.0, 0.0)
-    t_energy = tf.fill([N], E0)
-    t_pos = tf.zeros((N, 3), dtype=tf.float32)
-    t_time = tf.zeros((N, 1), dtype=tf.float32)
-    t_pid = tf.zeros((N, 6), dtype=tf.float32); t_pid = tf.tensor_scatter_nd_update(t_pid, [[i,0] for i in range(N)], tf.ones([N]))  # class 0 = photon
-    t_spectator = tf.zeros([N, 1], dtype=tf.float32)
-    t_fully_contained = tf.ones([N, 1], dtype=tf.float32)
-    t_rec_energy = tf.expand_dims(signal_fraction * dE, axis=-1)
-    t_is_unique = tf.zeros([N, 1], dtype=tf.float32)
-
-    t_sig_fraction = tf.expand_dims(signal_fraction, axis=-1)
-
-    return [
-        features,               row_splits,
-        t_idx,                  row_splits,
-        t_energy,               row_splits,
-        t_pos,                  row_splits,
-        t_time,                 row_splits,
-        t_pid,                  row_splits,
-        t_spectator,            row_splits,
-        t_fully_contained,      row_splits,
-        t_rec_energy,           row_splits,
-        t_is_unique,            row_splits,
-        t_sig_fraction,         row_splits
-    ]
-
-
-def get_feature_list_batched(centroids):
-    features_list, targets, E0 = generate_events(centroids)  # (B, N, F), (B,)
-
-    batch_inputs = []
-    for b in range(features_list.shape[0]):
-        inp = get_feature_list_single(features_list[b], targets[b])
-        batch_inputs.append(inp)
-
-    return batch_inputs, E0
-
 # Prepare the model
-# gradient inputs not required for training
 
 import training_base_hgcal
 
@@ -360,53 +237,76 @@ keras_model.load_weights("test_reco_smear/KERAS_check_model_last.h5")
 keras_model.trainable = False   
 
 # Evaluate the model on a set of generated showers
-batch_size = 2
-centroids = generate_debug_grid_centroids(batch_size) 
+centroids = tf.random.uniform((1, 2205, 3), minval=-400, maxval=400) # generate_debug_grid_centroids() 
+# Shift centroids z to 0
+centroids = tf.concat([tf.random.uniform((1, 2205, 2), minval=-400, maxval=400), tf.random.uniform((1, 2205, 1), minval=0, maxval=200)], axis=-1)
+print(centroids.shape)
 centroids = tf.Variable(centroids, dtype=tf.float32)
-
-def predict_batch(centroids):
-    batch_inputs, E0 = get_feature_list_batched(centroids)
-    preds = []
-    for single_input in batch_inputs:
-        preds.append(tf.reduce_sum(keras_model(single_input)['signal_fraction'][:,0]*single_input[0][:,0]))
-    return preds, E0
-
-# start = time.time()
-# out, E0 = predict_batch(centroids)
-# print(f'Time for tf batch predict: {time.time()-start}')
-
-# print('Predictions: ',[E for E in out])
-# print('Inputs: ',E0)
 
 # Define custom loss
 def loss_mse(E_pred, E_target):
-    return tf.reduce_mean(tf.square(E_target - E_pred))
+    return tf.reduce_mean(tf.abs(E_target - E_pred)/E_target)
 
-def full_loss(centroids):
-    out, E0 = predict_batch(centroids)
-    return loss_mse(out, E0)
+def full_loss(centroids, model=keras_model):
+    inputs, targets, E0 = generate_events(centroids, event_gen=event_gen, DEBUG=False)
+    input_list = get_feature_list_single(inputs[0], targets[0])
+    # Get model predictions
+    outputs = keras_model(input_list)
+    E_pred = tf.reduce_sum(outputs['signal_fraction'][:,0]*input_list[0][:,0]) # E_pred = signal_fraction * dE
+    print('--> ',E_pred)
+    print('--> ',E0)
+    # Compute std of volumes
+    vols = input_list[0][:,2]
+    vol_loss = tf.math.reduce_std(vols)
+    # Compute loss
+    loss = loss_mse(E_pred, E0) + 1e-2*vol_loss
+    return loss
 
 lr = 1e-6
+
 optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
 n_epochs = 500
 burn_in = 10
-total_loss = []
+accum_steps = 64
 
+# @tf.function
 def train_step(centroids):
-    with tf.GradientTape() as tape:
-        loss = full_loss(centroids)
-    grads = tape.gradient(loss, [centroids])
-    print("Grad norm:", tf.norm(grads[0]).numpy())
-    optimizer.apply_gradients(zip(grads, [centroids]))
-    return loss
+    grad_accum = [tf.zeros_like(c) for c in [centroids]]
+    total_loss = 0.0
 
+    for _ in range(accum_steps):
+        with tf.GradientTape() as tape:
+            loss = full_loss(centroids) / accum_steps
+        grads = tape.gradient(loss, [centroids])
+        grad_accum = [ga + g for ga, g in zip(grad_accum, grads)]
+        total_loss += loss
+
+    optimizer.apply_gradients(zip(grad_accum, [centroids]))
+    return total_loss
+
+total_loss = []
 for epoch in range(n_epochs):
     loss = train_step(centroids)
     total_loss.append(loss.numpy())
     
     if epoch % 10 == 0:
-        print(f"Epoch {epoch:3d} | Loss = {loss.numpy():.4f}")
+        # print(f"Epoch {epoch:3d} | Loss = {loss.numpy():.4f}")
+        # Plot loss curve
+        plt.figure()
+        plt.plot(total_loss)
+        plt.savefig(f'img/debug/pipe_loss_{lr}.jpg')
+        plt.close()
+        # Plot centroids 3D
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(centroids[:, :, 0], centroids[:, :, 1], centroids[:, :, 2], c='r', marker='o')
+        ax.set_xlabel('X') 
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        ax.set_title('Centroids')
+        plt.savefig(f'frames/pipe_centroids_{epoch}.jpg')
 
-plt.figure()
-plt.plot(total_loss)
-plt.savefig(f'img/debug/pipe_loss_{lr}.jpg')
+# Save final centroids as csv
+centroids_np = centroids.numpy()
+centroids_np = centroids_np.reshape(-1, 3)
+np.savetxt('centroids.csv', centroids_np, delimiter=',', header='x,y,z', comments='')
