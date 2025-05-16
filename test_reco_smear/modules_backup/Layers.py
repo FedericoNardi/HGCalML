@@ -333,7 +333,7 @@ global_layers_list['LLPFCondensates']=LLPFCondensates
 global_layers_list['LLNeighbourhoodClassifier']=LLNeighbourhoodClassifier
 global_layers_list['LLEdgeClassifier']=LLEdgeClassifier
 global_layers_list['LLGoodNeighbourHood']=LLGoodNeighbourHood
-
+global_layers_list['LLFractionRegressor']=LLFractionRegressor
 
 
 ####### other stuff goes here

@@ -50,18 +50,21 @@ def voronoi_assignment(centroids, resolution=100):
     closest_centroid = tf.argmin(distances, axis=0)  # Shape: (num_deposits,)
     return grid, closest_centroid
 
-def estimate_voronoi_volumes_3d(points, n_samples=100000, bounds=None):
+def estimate_voronoi_volumes_3d(points, n_samples=100000, bounds=None, seed=42):
     """
     Estimate the volume of 3D Voronoi regions using Monte Carlo sampling.
 
     Args:
-        points: Tensor of shape [N, 3] — the Voronoi seed points.
+        points: Tensor of shape [N, 3] — the Voronoi seed points (in mm).
         n_samples: Number of Monte Carlo samples.
-        bounds: List of tuples [(xmin, xmax), (ymin, ymax), (zmin, zmax)] — bounding box.
+        bounds: List of tuples [(xmin, xmax), (ymin, ymax), (zmin, zmax)] in mm.
+        seed: Integer seed for deterministic sampling.
 
     Returns:
-        volumes: Tensor of shape [N,] with estimated volumes.
+        volumes: Tensor of shape [N,] with estimated volumes in mm³.
     """
+    tf.random.set_seed(seed)  # Ensures determinism
+
     N = tf.shape(points)[0]
 
     if bounds is None:
@@ -69,31 +72,31 @@ def estimate_voronoi_volumes_3d(points, n_samples=100000, bounds=None):
         min_vals = tf.reduce_min(points, axis=0)
         max_vals = tf.reduce_max(points, axis=0)
         bounds = list(zip(min_vals.numpy(), max_vals.numpy()))
-    
-    # Sample uniformly within bounds
+
+    # Sample uniformly within bounds (in mm)
     samples = tf.stack([
-        tf.random.uniform((n_samples,), minval=low, maxval=high)
-        for (low, high) in bounds
-    ], axis=-1)  # [n_samples, 3]
+        tf.random.uniform((n_samples,), minval=b[0], maxval=b[1], dtype=tf.float32)
+        for b in bounds
+    ], axis=-1)  # Shape: (n_samples, 3)
 
-    # Compute distances to all points
-    samples_exp = tf.expand_dims(samples, axis=1)      # [n_samples, 1, 3]
-    points_exp = tf.expand_dims(points, axis=0)        # [1, N, 3]
-    dists = tf.norm(samples_exp - points_exp, axis=-1) # [n_samples, N]
+    # Compute distances to centroids
+    dists = tf.norm(tf.expand_dims(points, axis=1) - tf.expand_dims(samples, axis=0), axis=-1)  # [N, n_samples]
+    closest = tf.argmin(dists, axis=0)  # [n_samples]
 
-    # Find the nearest point for each sample
-    nearest = tf.cast(tf.argmin(dists, axis=1), tf.int32)                 # [n_samples]
-
-    # Count number of samples per region
-    region_counts = tf.math.bincount(nearest, minlength=N, maxlength=N, dtype=tf.float32)
-
-    # Scale by total volume of bounding box
-    total_volume = tf.reduce_prod(
-        tf.constant([high - low for (low, high) in bounds], dtype=tf.float32)
+    # Count assignments per centroid
+    counts = tf.math.unsorted_segment_sum(
+        data=tf.ones_like(closest, dtype=tf.float32),
+        segment_ids=closest,
+        num_segments=N
     )
 
-    volumes = region_counts / tf.cast(n_samples, tf.float32) * total_volume
-    return volumes
+    # Volume of bounding box (in mm³)
+    box_volume = tf.reduce_prod([b[1] - b[0] for b in bounds])
+
+    # Estimate volume per centroid
+    volumes = counts / tf.cast(n_samples, tf.float32) * box_volume
+
+    return volumes  # Units: mm³
 
 # Wrapper class starts here
 

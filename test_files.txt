@@ -1,7 +1,4 @@
-/media/disk/pyroot_tuples_smear/events_016.root
-/media/disk/pyroot_tuples_smear/events_025.root
-/media/disk/pyroot_tuples_smear/events_044.root
+/media/disk/pyroot_tuples_smear/events_014.root
 /media/disk/pyroot_tuples_smear/events_019.root
-/media/disk/pyroot_tuples_smear/events_043.root
-/media/disk/pyroot_tuples_smear/events_007.root
-/media/disk/pyroot_tuples_smear/events_006.root
+/media/disk/pyroot_tuples_smear/events_005.root
+/media/disk/pyroot_tuples_smear/events_000.root
