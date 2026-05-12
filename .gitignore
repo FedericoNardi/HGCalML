@@ -1,8 +1,0 @@
-*.root
-*.gz
-*.pyc
-
-.vscode
-docker.sh
-ML4Reco.code-workspace
-start.sh
